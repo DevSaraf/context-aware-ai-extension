@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "AI Context Assistant",
+  "version": "1.0",
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chat.openai.com/*",
+        "https://chatgpt.com/*"
+      ],
+      "js": ["memory.js", "content.js"]
+    }
+  ]
+}
