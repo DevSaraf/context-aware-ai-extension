@@ -14,6 +14,11 @@
     "http://127.0.0.1:8000/*"
   ],
 
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "AI Context Assistant"
+  },
+
   "background": {
     "service_worker": "background.js"
   },

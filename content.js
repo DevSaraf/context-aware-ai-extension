@@ -2,6 +2,7 @@ console.log("Context AI Extension Loaded");
 
 let listenerAttached = false;
 let debounceTimer = null;
+let currentResults = [];  // Store current results for injection
 
 
 /* ---------------- SIDEBAR ---------------- */
@@ -27,8 +28,11 @@ function createSidebar() {
     sidebar.style.overflowY = "auto";
 
     sidebar.innerHTML = `
-        <h2>Context Assistant</h2>
-        <div id="context-output">Waiting for prompt...</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+            <h2 style="margin:0">Context Assistant</h2>
+            <span id="auth-status" style="font-size:11px;color:#888"></span>
+        </div>
+        <div id="context-output">Checking authentication...</div>
     `;
 
     document.body.appendChild(sidebar);
@@ -37,9 +41,54 @@ function createSidebar() {
     if (main) {
         main.style.marginRight = "320px";
     }
+
+    // Check auth status
+    checkAuth();
 }
 
 createSidebar();
+
+
+/* ---------------- AUTH CHECK ---------------- */
+
+function checkAuth() {
+
+    chrome.runtime.sendMessage({ type: "CHECK_AUTH" }, function(response) {
+
+        const authStatus = document.getElementById("auth-status");
+        const output = document.getElementById("context-output");
+
+        if (!response || !response.authenticated) {
+            authStatus.textContent = "Not logged in";
+            authStatus.style.color = "#ff6b6b";
+            output.innerHTML = `
+                <div style="text-align:center;padding:40px 20px">
+                    <p style="color:#888;margin-bottom:15px">Please login to use Context Assistant</p>
+                    <p style="font-size:12px;color:#666">Click the extension icon in your browser toolbar to login</p>
+                </div>
+            `;
+        } else {
+            authStatus.textContent = response.email;
+            authStatus.style.color = "#51cf66";
+            output.innerHTML = "Waiting for prompt...";
+        }
+
+    });
+
+}
+
+
+/* ---------------- LISTEN FOR AUTH CHANGES ---------------- */
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
+    if (request.type === "AUTH_CHANGED") {
+        console.log("Auth status changed, rechecking...");
+        checkAuth();
+        currentResults = [];
+    }
+
+});
 
 
 /* ---------------- DISPLAY CONTEXT ---------------- */
@@ -49,24 +98,46 @@ function showContext(results) {
     const output = document.getElementById("context-output");
     if (!output) return;
 
+    // Store results for injection
+    currentResults = results || [];
+
     if (!results || results.length === 0) {
-        output.innerText = "No company knowledge found.";
+        output.innerHTML = `
+            <p style="color:#888">No relevant knowledge found.</p>
+            <p style="font-size:12px;color:#666;margin-top:10px">Try uploading company knowledge via the API.</p>
+        `;
         return;
     }
 
-    let html = "<h3>Relevant Knowledge</h3><ul>";
+    let html = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h3 style="margin:0">Relevant Knowledge</h3>
+            <button id="inject-context-btn" style="
+                padding:6px 12px;
+                background:#4a9eff;
+                color:white;
+                border:none;
+                border-radius:4px;
+                font-size:12px;
+                cursor:pointer;
+            ">Include Context</button>
+        </div>
+        <ul style="list-style:none;padding:0;margin:0">
+    `;
 
-    results.forEach(item => {
+    results.forEach((item, index) => {
 
         const similarity = item.similarity
             ? (item.similarity * 100).toFixed(1) + "% match"
             : "";
 
         html += `
-            <li style="margin-bottom:15px">
-                <b>${item.source_type || "Knowledge"} #${item.source_id || ""}</b>
-                <span style="font-size:11px;color:#888;margin-left:8px">${similarity}</span><br>
-                <span style="font-size:13px;color:#ccc">
+            <li style="margin-bottom:15px;padding:10px;background:#1a1a1a;border-radius:6px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                    <b style="color:#4a9eff">${item.source_type || "Knowledge"} #${item.source_id || ""}</b>
+                    <span style="font-size:11px;color:#888">${similarity}</span>
+                </div>
+                <span style="font-size:13px;color:#ccc;line-height:1.4">
                     ${item.text || ""}
                 </span>
             </li>
@@ -77,6 +148,12 @@ function showContext(results) {
     html += "</ul>";
 
     output.innerHTML = html;
+
+    // Attach inject button handler
+    const injectBtn = document.getElementById("inject-context-btn");
+    if (injectBtn) {
+        injectBtn.addEventListener("click", injectContext);
+    }
 }
 
 
@@ -84,6 +161,60 @@ function showError(message) {
     const output = document.getElementById("context-output");
     if (!output) return;
     output.innerHTML = `<p style="color:#ff6b6b">${message}</p>`;
+}
+
+
+/* ---------------- CONTEXT INJECTION ---------------- */
+
+function injectContext() {
+
+    if (!currentResults || currentResults.length === 0) {
+        return;
+    }
+
+    const textarea = document.querySelector("#prompt-textarea");
+    if (!textarea) {
+        console.error("Could not find ChatGPT textarea");
+        return;
+    }
+
+    // Get current prompt text
+    const currentText = textarea.innerText || textarea.value || "";
+
+    // Format context
+    let contextText = "[Company Context]\n";
+    currentResults.forEach((item, index) => {
+        const source = item.source_type || "Source";
+        contextText += `- ${source} #${item.source_id || index + 1}: ${item.text}\n`;
+    });
+    contextText += "\n[Your Question]\n";
+
+    // Combine context with current prompt
+    const newText = contextText + currentText;
+
+    // Set the new text
+    if (textarea.tagName === "TEXTAREA") {
+        textarea.value = newText;
+    } else {
+        // For contenteditable divs
+        textarea.innerText = newText;
+    }
+
+    // Trigger input event so ChatGPT recognizes the change
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Visual feedback
+    const btn = document.getElementById("inject-context-btn");
+    if (btn) {
+        btn.textContent = "Included!";
+        btn.style.background = "#51cf66";
+        setTimeout(() => {
+            btn.textContent = "Include Context";
+            btn.style.background = "#4a9eff";
+        }, 2000);
+    }
+
+    console.log("Context injected into prompt");
 }
 
 
@@ -108,7 +239,7 @@ function sendPrompt(prompt) {
 
             if (!response.success) {
                 console.error("Backend error:", response.error);
-                showError("Backend error: " + response.error);
+                showError(response.error);
                 return;
             }
 
@@ -143,7 +274,12 @@ function attachListener() {
 
             if (!prompt || prompt.length < 3) return;
 
-            sendPrompt(prompt);
+            // Check if we're authenticated before sending
+            chrome.runtime.sendMessage({ type: "CHECK_AUTH" }, function(response) {
+                if (response && response.authenticated) {
+                    sendPrompt(prompt);
+                }
+            });
 
         }, 800);
 
@@ -184,6 +320,7 @@ setInterval(() => {
         console.log("Chat changed, reinitializing extension");
 
         listenerAttached = false;
+        currentResults = [];
 
         attachListener();
 
