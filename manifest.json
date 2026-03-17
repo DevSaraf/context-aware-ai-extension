@@ -2,18 +2,29 @@
   "manifest_version": 3,
   "name": "AI Context Assistant",
   "version": "1.0",
-  "permissions": ["activeTab"],
-  "host_permissions": [
-    "https://chat.openai.com/*",
-    "https://chatgpt.com/*"
+  "description": "Company context assistant",
+
+  "permissions": [
+    "storage",
+    "activeTab"
   ],
+
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
   "content_scripts": [
     {
       "matches": [
         "https://chat.openai.com/*",
         "https://chatgpt.com/*"
       ],
-      "js": ["memory.js", "content.js"]
+      "js": ["content.js"]
     }
   ]
 }

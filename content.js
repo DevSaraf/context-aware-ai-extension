@@ -1,6 +1,7 @@
-console.log("Extension loaded");
+console.log("Context AI Extension Loaded");
 
 let listenerAttached = false;
+let debounceTimer = null;
 
 
 /* ---------------- SIDEBAR ---------------- */
@@ -23,6 +24,7 @@ function createSidebar() {
     sidebar.style.padding = "20px";
     sidebar.style.borderLeft = "1px solid #333";
     sidebar.style.fontFamily = "Arial";
+    sidebar.style.overflowY = "auto";
 
     sidebar.innerHTML = `
         <h2>Context Assistant</h2>
@@ -31,88 +33,133 @@ function createSidebar() {
 
     document.body.appendChild(sidebar);
 
-    // Push ChatGPT content left
     const main = document.querySelector("main");
-
     if (main) {
         main.style.marginRight = "320px";
-        main.style.transition = "margin 0.2s ease";
     }
 }
 
 createSidebar();
 
 
+/* ---------------- DISPLAY CONTEXT ---------------- */
+
+function showContext(results) {
+
+    const output = document.getElementById("context-output");
+    if (!output) return;
+
+    if (!results || results.length === 0) {
+        output.innerText = "No company knowledge found.";
+        return;
+    }
+
+    let html = "<h3>Relevant Knowledge</h3><ul>";
+
+    results.forEach(item => {
+
+        const similarity = item.similarity
+            ? (item.similarity * 100).toFixed(1) + "% match"
+            : "";
+
+        html += `
+            <li style="margin-bottom:15px">
+                <b>${item.source_type || "Knowledge"} #${item.source_id || ""}</b>
+                <span style="font-size:11px;color:#888;margin-left:8px">${similarity}</span><br>
+                <span style="font-size:13px;color:#ccc">
+                    ${item.text || ""}
+                </span>
+            </li>
+        `;
+
+    });
+
+    html += "</ul>";
+
+    output.innerHTML = html;
+}
+
+
+function showError(message) {
+    const output = document.getElementById("context-output");
+    if (!output) return;
+    output.innerHTML = `<p style="color:#ff6b6b">${message}</p>`;
+}
+
+
+/* ---------------- SEND PROMPT ---------------- */
+
+function sendPrompt(prompt) {
+
+    console.log("Sending prompt to backend:", prompt);
+
+    chrome.runtime.sendMessage(
+        {
+            type: "SEARCH_CONTEXT",
+            prompt: prompt
+        },
+        function(response) {
+
+            if (!response) {
+                console.error("No response from background script");
+                showError("No response from backend.");
+                return;
+            }
+
+            if (!response.success) {
+                console.error("Backend error:", response.error);
+                showError("Backend error: " + response.error);
+                return;
+            }
+
+            console.log("Received results:", response.data);
+
+            showContext(response.data.sources);
+        }
+    );
+
+}
+
+
+/* ---------------- PROMPT LISTENER ---------------- */
+
 function attachListener() {
 
     if (listenerAttached) return;
 
-    const promptBox = document.querySelector("#prompt-textarea");
+    const textarea = document.querySelector("#prompt-textarea");
 
-    if (!promptBox) return;
+    if (!textarea) return;
 
-    console.log("Prompt field detected");
+    console.log("Prompt box detected");
 
-    function processPrompt() {
+    textarea.addEventListener("input", () => {
 
-        const promptText = promptBox.innerText.trim();
+        clearTimeout(debounceTimer);
 
-        console.log("User prompt:", promptText);
+        debounceTimer = setTimeout(() => {
 
-        const output = document.getElementById("context-output");
-        if (!output) return;
+            const prompt = textarea.innerText || textarea.value || "";
 
-        const text = promptText.toLowerCase();
+            if (!prompt || prompt.length < 3) return;
 
-        let topic = "general";
+            sendPrompt(prompt);
 
-        if (text.includes("api")) topic = "api";
-        else if (text.includes("database") || text.includes("db")) topic = "database";
-        else if (text.includes("auth") || text.includes("login")) topic = "auth";
+        }, 800);
 
-        const suggestions = MEMORY[topic] || [];
-
-        output.innerHTML = `
-            <p><b>Topic:</b> ${topic}</p>
-            <br>
-            <p><b>Context suggestions:</b></p>
-            <ul>
-                ${suggestions.map(s => `<li>${s}</li>`).join("")}
-            </ul>
-        `;
-    }
-
-    /* Detect typing */
-    promptBox.addEventListener("input", processPrompt);
-
-    /* Detect paste */
-    promptBox.addEventListener("paste", () => {
-        setTimeout(processPrompt, 50);
-    });
-
-    /* Detect DOM mutations (ProseMirror updates) */
-    const promptObserver = new MutationObserver(() => {
-        processPrompt();
-    });
-
-    promptObserver.observe(promptBox, {
-        childList: true,
-        subtree: true,
-        characterData: true
     });
 
     listenerAttached = true;
 }
 
 
-
-/* ---------------- OBSERVER ---------------- */
+/* ---------------- CHATGPT DOM OBSERVER ---------------- */
 
 const observer = new MutationObserver(() => {
 
-    const promptBox = document.querySelector("#prompt-textarea");
+    const textarea = document.querySelector("#prompt-textarea");
 
-    if (promptBox) {
+    if (textarea) {
         attachListener();
     }
 
@@ -122,3 +169,24 @@ observer.observe(document.body, {
     childList: true,
     subtree: true
 });
+
+
+/* ---------------- CHAT SWITCH DETECTION ---------------- */
+
+let lastUrl = location.href;
+
+setInterval(() => {
+
+    if (location.href !== lastUrl) {
+
+        lastUrl = location.href;
+
+        console.log("Chat changed, reinitializing extension");
+
+        listenerAttached = false;
+
+        attachListener();
+
+    }
+
+}, 1000);
