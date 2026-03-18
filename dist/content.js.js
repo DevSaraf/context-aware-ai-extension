@@ -3,6 +3,26 @@ console.log("Context AI Extension Loaded");
 let listenerAttached = false;
 let debounceTimer = null;
 let currentResults = [];
+let currentQuery = "";
+
+// Helper to safely send messages (handles extension context invalidation)
+function safeSendMessage(message, callback) {
+    try {
+        if (!chrome.runtime?.id) {
+            console.log("Extension context invalidated - please refresh the page");
+            return;
+        }
+        chrome.runtime.sendMessage(message, function(response) {
+            if (chrome.runtime.lastError) {
+                console.log("Extension error:", chrome.runtime.lastError.message);
+                return;
+            }
+            if (callback) callback(response);
+        });
+    } catch (e) {
+        console.log("Extension not available:", e.message);
+    }
+}
 
 /* ---------------- PLATFORM DETECTION ---------------- */
 
@@ -433,6 +453,72 @@ const STYLES = `
     height: 16px;
     opacity: 0.5;
 }
+
+/* Feedback Buttons */
+.ctx-feedback {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #2a2a2a;
+}
+
+.ctx-feedback-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ctx-feedback-btn:hover {
+    border-color: #555;
+    color: #ccc;
+}
+
+.ctx-feedback-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.ctx-feedback-btn.helpful:hover,
+.ctx-feedback-btn.helpful.active {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.ctx-feedback-btn.not-helpful:hover,
+.ctx-feedback-btn.not-helpful.active {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.ctx-feedback-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.ctx-feedback-thanks {
+    font-size: 11px;
+    color: #22c55e;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ctx-feedback-thanks svg {
+    width: 14px;
+    height: 14px;
+}
 `;
 
 /* ---------------- ICONS ---------------- */
@@ -445,7 +531,9 @@ const ICONS = {
     inject: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
     check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
     user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    click: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>`
+    click: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>`,
+    thumbsUp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>`,
+    thumbsDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>`
 };
 
 /* ---------------- SIDEBAR ---------------- */
@@ -498,9 +586,11 @@ createSidebar();
 /* ---------------- AUTH CHECK ---------------- */
 
 function checkAuth() {
-    chrome.runtime.sendMessage({ type: "CHECK_AUTH" }, function(response) {
+    safeSendMessage({ type: "CHECK_AUTH" }, function(response) {
         const authStatus = document.getElementById("auth-status");
         const output = document.getElementById("context-output");
+
+        if (!authStatus || !output) return;
 
         if (!response || !response.authenticated) {
             authStatus.className = "ctx-status logged-out";
@@ -588,14 +678,16 @@ function showContext(results) {
 
     let cardsHtml = '';
     results.forEach((item, index) => {
-        const similarity = item.similarity || 0;
-        const percent = (similarity * 100).toFixed(0);
-        const level = getConfidenceLevel(similarity);
+        // Use confidence if available, fallback to similarity
+        const confidence = item.confidence || item.similarity || 0;
+        const percent = (confidence * 100).toFixed(0);
+        const level = getConfidenceLevel(confidence);
         const sourceType = item.source_type || "Document";
         const sourceId = item.source_id || (index + 1);
+        const chunkId = item.id || 0;
 
         cardsHtml += `
-            <div class="ctx-card">
+            <div class="ctx-card" data-chunk-id="${chunkId}">
                 <div class="ctx-card-header">
                     <div class="ctx-card-source">
                         <div class="ctx-card-icon">${ICONS.document}</div>
@@ -613,6 +705,16 @@ function showContext(results) {
                 </div>
                 <div class="ctx-card-body">
                     <p class="ctx-card-text">${item.text || ""}</p>
+                    <div class="ctx-feedback" id="feedback-${chunkId}">
+                        <button class="ctx-feedback-btn helpful" data-chunk-id="${chunkId}" data-feedback-type="helpful" data-confidence="${confidence}">
+                            ${ICONS.thumbsUp}
+                            <span>Helpful</span>
+                        </button>
+                        <button class="ctx-feedback-btn not-helpful" data-chunk-id="${chunkId}" data-feedback-type="not_helpful" data-confidence="${confidence}">
+                            ${ICONS.thumbsDown}
+                            <span>Not helpful</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -634,6 +736,17 @@ function showContext(results) {
     if (injectBtn) {
         injectBtn.addEventListener("click", injectContext);
     }
+
+    // Attach feedback button listeners (avoiding inline onclick due to CSP)
+    const feedbackBtns = output.querySelectorAll('.ctx-feedback-btn');
+    feedbackBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chunkId = parseInt(this.dataset.chunkId);
+            const feedbackType = this.dataset.feedbackType;
+            const confidence = parseFloat(this.dataset.confidence);
+            submitFeedback(chunkId, feedbackType, confidence);
+        });
+    });
 }
 
 function showError(message) {
@@ -651,6 +764,42 @@ function showError(message) {
 }
 
 
+/* ---------------- FEEDBACK ---------------- */
+
+function submitFeedback(chunkId, feedbackType, similarityScore) {
+    console.log(`Submitting feedback: ${feedbackType} for chunk ${chunkId}`);
+    
+    const feedbackDiv = document.getElementById(`feedback-${chunkId}`);
+    if (!feedbackDiv) return;
+
+    // Disable buttons immediately
+    const buttons = feedbackDiv.querySelectorAll('.ctx-feedback-btn');
+    buttons.forEach(btn => btn.classList.add('disabled'));
+
+    safeSendMessage({
+        type: "SUBMIT_FEEDBACK",
+        chunk_id: chunkId,
+        feedback_type: feedbackType,
+        query: currentQuery,
+        similarity_score: similarityScore
+    }, function(response) {
+        if (response && response.success) {
+            // Show thank you message
+            feedbackDiv.innerHTML = `
+                <div class="ctx-feedback-thanks">
+                    ${ICONS.check}
+                    <span>Thanks for your feedback!</span>
+                </div>
+            `;
+        } else {
+            // Re-enable buttons on error
+            buttons.forEach(btn => btn.classList.remove('disabled'));
+            console.error("Feedback error:", response?.error);
+        }
+    });
+}
+
+
 /* ---------------- CONTEXT INJECTION ---------------- */
 
 function getTextarea() {
@@ -660,6 +809,19 @@ function getTextarea() {
 
 function injectContext() {
     if (!currentResults || currentResults.length === 0) return;
+
+    // Track that context was used
+    currentResults.forEach(item => {
+        if (item.id) {
+            safeSendMessage({
+                type: "SUBMIT_FEEDBACK",
+                chunk_id: item.id,
+                feedback_type: "used",
+                query: currentQuery,
+                similarity_score: item.confidence || item.similarity
+            });
+        }
+    });
 
     const textarea = getTextarea();
     if (!textarea) {
@@ -721,9 +883,12 @@ function injectContext() {
 function sendPrompt(prompt) {
     console.log("Sending prompt to backend:", prompt);
     
+    // Store current query for feedback
+    currentQuery = prompt;
+    
     showLoading();
 
-    chrome.runtime.sendMessage(
+    safeSendMessage(
         { type: "SEARCH_CONTEXT", prompt: prompt },
         function(response) {
             if (!response) {
@@ -756,22 +921,29 @@ function attachListener() {
 
     console.log(`Prompt box detected on ${currentPlatform.name}`);
 
-    textarea.addEventListener("input", () => {
+    const handleInput = () => {
         clearTimeout(debounceTimer);
 
         debounceTimer = setTimeout(() => {
-            const prompt = textarea.innerText || textarea.value || "";
+            const prompt = textarea.innerText || textarea.textContent || textarea.value || "";
+            const cleanPrompt = prompt.trim();
 
-            if (!prompt || prompt.length < 3) return;
+            if (!cleanPrompt || cleanPrompt.length < 3) return;
+
+            console.log("Detected prompt:", cleanPrompt.substring(0, 50) + "...");
 
             // Check if we're authenticated before sending
-            chrome.runtime.sendMessage({ type: "CHECK_AUTH" }, function(response) {
+            safeSendMessage({ type: "CHECK_AUTH" }, function(response) {
                 if (response && response.authenticated) {
-                    sendPrompt(prompt);
+                    sendPrompt(cleanPrompt);
                 }
             });
         }, 800);
-    });
+    };
+
+    // Listen for multiple events to catch input in contenteditable
+    textarea.addEventListener("input", handleInput);
+    textarea.addEventListener("keyup", handleInput);
 
     listenerAttached = true;
 }

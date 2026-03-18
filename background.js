@@ -13,6 +13,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.type === "SUBMIT_FEEDBACK") {
+        handleFeedback(request, sendResponse);
+        return true;
+    }
+
 });
 
 
@@ -65,6 +70,44 @@ async function handleContextSearch(prompt, sendResponse) {
             success: false,
             error: error.toString()
         });
+    }
+}
+
+
+async function handleFeedback(request, sendResponse) {
+    try {
+        const data = await chrome.storage.local.get(["token"]);
+
+        if (!data.token) {
+            sendResponse({ success: false, error: "Not authenticated" });
+            return;
+        }
+
+        const response = await fetch(`${API_URL}/feedback`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${data.token}`
+            },
+            body: JSON.stringify({
+                chunk_id: request.chunk_id,
+                feedback_type: request.feedback_type,
+                query: request.query,
+                similarity_score: request.similarity_score
+            })
+        });
+
+        if (response.status === 401) {
+            sendResponse({ success: false, error: "Session expired" });
+            return;
+        }
+
+        const result = await response.json();
+        sendResponse({ success: !result.error, ...result });
+
+    } catch (error) {
+        console.error("Feedback error:", error);
+        sendResponse({ success: false, error: error.toString() });
     }
 }
 
