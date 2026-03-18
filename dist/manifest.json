@@ -3,33 +3,43 @@
   "name": "AI Context Assistant",
   "version": "1.0.0",
   "description": "Company context assistant for ChatGPT",
-
   "permissions": [
     "storage",
     "activeTab"
   ],
-
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*"
   ],
-
   "action": {
     "default_popup": "popup.html",
     "default_title": "AI Context Assistant"
   },
-
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
   },
-
   "content_scripts": [
     {
       "matches": [
         "https://chat.openai.com/*",
         "https://chatgpt.com/*"
       ],
-      "js": ["content.js"]
+      "js": [
+        "content.js-loader.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "**/*",
+        "*"
+      ],
+      "use_dynamic_url": false
     }
   ]
 }

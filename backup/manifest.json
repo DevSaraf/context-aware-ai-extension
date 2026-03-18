@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Context Assistant",
-  "version": "1.0.0",
-  "description": "Company context assistant for ChatGPT",
+  "version": "1.0",
+  "description": "Company context assistant",
 
   "permissions": [
     "storage",
