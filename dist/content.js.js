@@ -4,6 +4,45 @@ let listenerAttached = false;
 let debounceTimer = null;
 let currentResults = [];
 
+/* ---------------- PLATFORM DETECTION ---------------- */
+
+const PLATFORMS = {
+    chatgpt: {
+        name: 'ChatGPT',
+        hostname: ['chat.openai.com', 'chatgpt.com'],
+        textareaSelector: '#prompt-textarea',
+        mainSelector: 'main',
+        isContentEditable: true
+    },
+    claude: {
+        name: 'Claude',
+        hostname: ['claude.ai'],
+        textareaSelector: '[contenteditable="true"].ProseMirror, div[contenteditable="true"]',
+        mainSelector: 'main',
+        isContentEditable: true
+    },
+    gemini: {
+        name: 'Gemini',
+        hostname: ['gemini.google.com'],
+        textareaSelector: 'rich-textarea div[contenteditable="true"], .ql-editor',
+        mainSelector: 'main',
+        isContentEditable: true
+    }
+};
+
+function detectPlatform() {
+    const hostname = window.location.hostname;
+    for (const [key, platform] of Object.entries(PLATFORMS)) {
+        if (platform.hostname.some(h => hostname.includes(h))) {
+            return { key, ...platform };
+        }
+    }
+    return null;
+}
+
+const currentPlatform = detectPlatform();
+console.log("Detected platform:", currentPlatform?.name || "Unknown");
+
 /* ---------------- STYLES ---------------- */
 
 const STYLES = `
@@ -614,12 +653,18 @@ function showError(message) {
 
 /* ---------------- CONTEXT INJECTION ---------------- */
 
+function getTextarea() {
+    if (!currentPlatform) return null;
+    return document.querySelector(currentPlatform.textareaSelector);
+}
+
 function injectContext() {
     if (!currentResults || currentResults.length === 0) return;
 
-    const textarea = document.querySelector("#prompt-textarea");
+    const textarea = getTextarea();
     if (!textarea) {
-        console.error("Could not find ChatGPT textarea");
+        console.error(`Could not find textarea for ${currentPlatform?.name || 'unknown platform'}`);
+        showError(`Could not find input field. Try clicking in the chat box first.`);
         return;
     }
 
@@ -634,13 +679,28 @@ function injectContext() {
 
     const newText = contextText + currentText;
 
+    // Handle different input types
     if (textarea.tagName === "TEXTAREA") {
         textarea.value = newText;
+    } else if (textarea.contentEditable === "true" || currentPlatform?.isContentEditable) {
+        // For contenteditable divs (Claude, Gemini, ChatGPT)
+        textarea.focus();
+        
+        // Try using execCommand for better compatibility
+        document.execCommand('selectAll', false, null);
+        document.execCommand('insertText', false, newText);
+        
+        // Fallback
+        if (textarea.innerText !== newText) {
+            textarea.innerText = newText;
+        }
     } else {
         textarea.innerText = newText;
     }
 
+    // Trigger input event so the platform recognizes the change
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.dispatchEvent(new Event("change", { bubbles: true }));
 
     const btn = document.getElementById("inject-context-btn");
     if (btn) {
@@ -688,21 +748,18 @@ function sendPrompt(prompt) {
 /* ---------------- PROMPT LISTENER ---------------- */
 
 function attachListener() {
-
     if (listenerAttached) return;
+    if (!currentPlatform) return;
 
-    const textarea = document.querySelector("#prompt-textarea");
-
+    const textarea = getTextarea();
     if (!textarea) return;
 
-    console.log("Prompt box detected");
+    console.log(`Prompt box detected on ${currentPlatform.name}`);
 
     textarea.addEventListener("input", () => {
-
         clearTimeout(debounceTimer);
 
         debounceTimer = setTimeout(() => {
-
             const prompt = textarea.innerText || textarea.value || "";
 
             if (!prompt || prompt.length < 3) return;
@@ -713,25 +770,22 @@ function attachListener() {
                     sendPrompt(prompt);
                 }
             });
-
         }, 800);
-
     });
 
     listenerAttached = true;
 }
 
 
-/* ---------------- CHATGPT DOM OBSERVER ---------------- */
+/* ---------------- DOM OBSERVER ---------------- */
 
 const observer = new MutationObserver(() => {
-
-    const textarea = document.querySelector("#prompt-textarea");
-
+    if (!currentPlatform) return;
+    
+    const textarea = getTextarea();
     if (textarea) {
         attachListener();
     }
-
 });
 
 observer.observe(document.body, {

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AI Context Assistant",
   "version": "1.0.0",
-  "description": "Company context assistant for ChatGPT",
+  "description": "Company context assistant for AI chat platforms",
 
   "permissions": [
     "storage",
@@ -27,7 +27,9 @@
     {
       "matches": [
         "https://chat.openai.com/*",
-        "https://chatgpt.com/*"
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*"
       ],
       "js": ["content.js"]
     }
