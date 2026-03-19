@@ -237,6 +237,39 @@ const STYLES = `
     line-height: 1.4;
 }
 
+/* AI Answer Card */
+.ctx-ai-answer {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.ctx-ai-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: #3b82f6;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ctx-ai-header svg {
+    width: 16px;
+    height: 16px;
+}
+
+.ctx-ai-body {
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
 /* Results */
 .ctx-results-header {
     display: flex;
@@ -519,6 +552,137 @@ const STYLES = `
     width: 14px;
     height: 14px;
 }
+
+/* AI Answer Section */
+.ctx-answer {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.ctx-answer-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.ctx-answer-badge {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.15);
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.ctx-answer-confidence {
+    font-size: 11px;
+    color: #888;
+    margin-left: auto;
+}
+
+.ctx-answer-text {
+    font-size: 13px;
+    color: #ddd;
+    line-height: 1.7;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+.ctx-answer-divider {
+    border: none;
+    border-top: 1px solid #2a2a2a;
+    margin: 16px 0;
+}
+
+.ctx-no-answer {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+/* Toggle Button */
+.ctx-toggle-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #888;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    margin-left: 8px;
+}
+
+.ctx-toggle-btn:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border-color: #555;
+}
+
+.ctx-toggle-btn svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s;
+}
+
+/* Floating Pill (shown when sidebar is hidden) */
+#context-sidebar-pill {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 10px 0 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 9998;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    border: none;
+    color: #fff;
+}
+
+#context-sidebar-pill:hover {
+    width: 48px;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+}
+
+#context-sidebar-pill svg {
+    width: 20px;
+    height: 20px;
+}
+
+#context-sidebar-pill.hidden {
+    display: none;
+}
+
+/* Transition for sidebar */
+#context-sidebar {
+    transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+#context-sidebar.sidebar-hidden {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    border-left: none;
+    pointer-events: none;
+}
 `;
 
 /* ---------------- ICONS ---------------- */
@@ -546,6 +710,19 @@ function createSidebar() {
     styleEl.textContent = STYLES;
     document.head.appendChild(styleEl);
 
+    // Create the floating pill (shown when sidebar is hidden)
+    const pill = document.createElement("button");
+    pill.id = "context-sidebar-pill";
+    pill.className = "hidden";
+    pill.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+        </svg>
+    `;
+    pill.addEventListener("click", () => toggleSidebar(true));
+    document.body.appendChild(pill);
+
     const sidebar = document.createElement("div");
     sidebar.id = "context-sidebar";
 
@@ -556,9 +733,16 @@ function createSidebar() {
                     ${ICONS.logo}
                     <h1 class="ctx-title">Context Assistant</h1>
                 </div>
-                <div id="auth-status" class="ctx-status logged-out">
-                    <span class="ctx-status-dot"></span>
-                    <span class="ctx-status-text">Checking...</span>
+                <div style="display:flex;align-items:center;">
+                    <div id="auth-status" class="ctx-status logged-out">
+                        <span class="ctx-status-dot"></span>
+                        <span class="ctx-status-text">Checking...</span>
+                    </div>
+                    <button class="ctx-toggle-btn" id="ctx-toggle-btn" title="Minimize sidebar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>
@@ -572,12 +756,65 @@ function createSidebar() {
 
     document.body.appendChild(sidebar);
 
-    const main = document.querySelector("main");
-    if (main) {
-        main.style.marginRight = "340px";
-    }
+    // Toggle button listener
+    document.getElementById("ctx-toggle-btn").addEventListener("click", () => {
+        toggleSidebar(false);
+    });
+
+    // Restore saved state
+    restoreSidebarState();
 
     checkAuth();
+}
+
+function toggleSidebar(show) {
+    const sidebar = document.getElementById("context-sidebar");
+    const pill = document.getElementById("context-sidebar-pill");
+    const main = document.querySelector("main");
+
+    if (show) {
+        // Show sidebar
+        sidebar.classList.remove("sidebar-hidden");
+        pill.classList.add("hidden");
+        if (main) main.style.marginRight = "340px";
+        saveSidebarState(true);
+    } else {
+        // Hide sidebar
+        sidebar.classList.add("sidebar-hidden");
+        pill.classList.remove("hidden");
+        if (main) main.style.marginRight = "0";
+        saveSidebarState(false);
+    }
+}
+
+function saveSidebarState(isOpen) {
+    try {
+        if (chrome.storage && chrome.storage.local) {
+            chrome.storage.local.set({ sidebar_open: isOpen });
+        }
+    } catch (e) {
+        // Ignore storage errors
+    }
+}
+
+function restoreSidebarState() {
+    try {
+        if (chrome.storage && chrome.storage.local) {
+            chrome.storage.local.get(["sidebar_open"], function(data) {
+                // Default to open if no saved state
+                if (data.sidebar_open === false) {
+                    toggleSidebar(false);
+                } else {
+                    toggleSidebar(true);
+                }
+            });
+        } else {
+            // No storage access, default to open
+            toggleSidebar(true);
+        }
+    } catch (e) {
+        toggleSidebar(true);
+    }
 }
 
 createSidebar();
@@ -749,6 +986,128 @@ function showContext(results) {
     });
 }
 
+// Helper to escape HTML for security
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showContextWithAnswer(data) {
+    const output = document.getElementById("context-output");
+    if (!output) return;
+
+    const results = data.sources || [];
+    const answer = data.answer || "";
+    const confidence = data.confidence || 0;
+    const hasAnswer = data.has_answer !== false;
+    
+    currentResults = results;
+
+    if (!results || results.length === 0) {
+        output.innerHTML = `
+            <div class="ctx-empty">
+                <div class="ctx-empty-icon">${ICONS.search}</div>
+                <div class="ctx-empty-title">No matches found</div>
+                <div class="ctx-empty-desc">No relevant knowledge found for this query.</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Build the AI answer section
+    let answerHtml = '';
+    if (answer && hasAnswer) {
+        const confPercent = (confidence * 100).toFixed(0);
+        answerHtml = `
+            <div class="ctx-answer">
+                <div class="ctx-answer-header">
+                    <span class="ctx-answer-badge">AI Answer</span>
+                    <span class="ctx-answer-confidence">${confPercent}% confidence</span>
+                </div>
+                <p class="ctx-answer-text">${escapeHtml(answer)}</p>
+            </div>
+        `;
+    } else if (results.length > 0) {
+        answerHtml = `<div class="ctx-no-answer">Related knowledge found, but no direct answer.</div>`;
+    }
+
+    // Build result cards
+    let cardsHtml = '';
+    results.forEach((item, index) => {
+        const itemConfidence = item.confidence || item.similarity || 0;
+        const percent = (itemConfidence * 100).toFixed(0);
+        const level = getConfidenceLevel(itemConfidence);
+        const sourceType = item.source_type || "Document";
+        const sourceId = item.source_id || (index + 1);
+        const chunkId = item.id || 0;
+
+        cardsHtml += `
+            <div class="ctx-card" data-chunk-id="${chunkId}">
+                <div class="ctx-card-header">
+                    <div class="ctx-card-source">
+                        <div class="ctx-card-icon">${ICONS.document}</div>
+                        <div>
+                            <div class="ctx-card-label">${sourceType}</div>
+                            <div class="ctx-card-id">#${sourceId}</div>
+                        </div>
+                    </div>
+                    <div class="ctx-confidence">
+                        <div class="ctx-confidence-bar">
+                            <div class="ctx-confidence-fill ${level}" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="ctx-confidence-text ${level}">${percent}%</span>
+                    </div>
+                </div>
+                <div class="ctx-card-body">
+                    <p class="ctx-card-text">${escapeHtml(item.text || "")}</p>
+                    <div class="ctx-feedback" id="feedback-${chunkId}">
+                        <button class="ctx-feedback-btn helpful" data-chunk-id="${chunkId}" data-feedback-type="helpful" data-confidence="${itemConfidence}">
+                            ${ICONS.thumbsUp}
+                            <span>Helpful</span>
+                        </button>
+                        <button class="ctx-feedback-btn not-helpful" data-chunk-id="${chunkId}" data-feedback-type="not_helpful" data-confidence="${itemConfidence}">
+                            ${ICONS.thumbsDown}
+                            <span>Not helpful</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    output.innerHTML = `
+        <div class="ctx-results-header">
+            <span class="ctx-results-title">Knowledge Found</span>
+            <span class="ctx-results-count">${results.length} source${results.length > 1 ? 's' : ''}</span>
+        </div>
+        ${answerHtml}
+        <button id="inject-context-btn" class="ctx-inject-btn">
+            ${ICONS.inject}
+            <span>Add Context to Prompt</span>
+        </button>
+        <hr class="ctx-answer-divider">
+        ${cardsHtml}
+    `;
+
+    // Attach inject button listener
+    const injectBtn = document.getElementById("inject-context-btn");
+    if (injectBtn) {
+        injectBtn.addEventListener("click", injectContext);
+    }
+
+    // Attach feedback listeners
+    const feedbackBtns = output.querySelectorAll('.ctx-feedback-btn');
+    feedbackBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const chunkId = parseInt(this.dataset.chunkId);
+            const feedbackType = this.dataset.feedbackType;
+            const conf = parseFloat(this.dataset.confidence);
+            submitFeedback(chunkId, feedbackType, conf);
+        });
+    });
+}
+
 function showError(message) {
     const output = document.getElementById("context-output");
     if (!output) return;
@@ -904,7 +1263,8 @@ function sendPrompt(prompt) {
             }
 
             console.log("Received results:", response.data);
-            showContext(response.data.sources);
+            // NEW: Pass full response data to show AI answer + chunks
+            showContextWithAnswer(response.data);
         }
     );
 }
