@@ -1,4 +1,4 @@
-const API_URL = "https://krabai.azurewebsites.net";
+const API_URL = "https://krabai.tech";
 
 // DOM Elements
 const loginForm = document.getElementById("login-form");
