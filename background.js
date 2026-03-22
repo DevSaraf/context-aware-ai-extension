@@ -1,11 +1,11 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://krabai.tech";
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.type === "SEARCH_CONTEXT") {
         handleContextSearch(request.prompt, sendResponse);
-        return true;  // Keep message channel open for async response
+        return true;
     }
 
     if (request.type === "CHECK_AUTH") {
@@ -18,13 +18,52 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.type === "LOGIN") {
+        handleLogin(request, sendResponse);
+        return true;
+    }
+
+    if (request.type === "REGISTER") {
+        handleRegister(request, sendResponse);
+        return true;
+    }
+
 });
+
+
+async function handleLogin(request, sendResponse) {
+    try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: request.email, password: request.password })
+        });
+        const data = await response.json();
+        sendResponse({ success: !data.error && !data.detail, data });
+    } catch (error) {
+        sendResponse({ success: false, data: { error: "Connection error. Is the backend running?" } });
+    }
+}
+
+
+async function handleRegister(request, sendResponse) {
+    try {
+        const response = await fetch(`${API_URL}/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: request.email, password: request.password, company_id: request.company_id })
+        });
+        const data = await response.json();
+        sendResponse({ success: !data.error && !data.detail, data });
+    } catch (error) {
+        sendResponse({ success: false, data: { error: "Connection error. Is the backend running?" } });
+    }
+}
 
 
 async function handleContextSearch(prompt, sendResponse) {
 
     try {
-        // Get token from storage
         const data = await chrome.storage.local.get(["token"]);
 
         if (!data.token) {
@@ -44,11 +83,8 @@ async function handleContextSearch(prompt, sendResponse) {
             body: JSON.stringify({ prompt })
         });
 
-        // Handle 401 - token expired or invalid
         if (response.status === 401) {
-            // Clear stored token
             await chrome.storage.local.remove(["token", "email", "company_id"]);
-
             sendResponse({
                 success: false,
                 error: "Session expired. Please login again."

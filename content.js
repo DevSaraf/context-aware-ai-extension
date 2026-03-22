@@ -1028,8 +1028,6 @@ function showContextWithAnswer(data) {
                 <p class="ctx-answer-text">${escapeHtml(answer)}</p>
             </div>
         `;
-    } else if (results.length > 0) {
-        answerHtml = `<div class="ctx-no-answer">Related knowledge found, but no direct answer.</div>`;
     }
 
     // Build result cards

@@ -1,5 +1,3 @@
-const API_URL = "http://127.0.0.1:8000";
-
 // DOM Elements
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
@@ -80,7 +78,7 @@ function showError(element, message) {
 }
 
 
-// Login handler
+// Login handler — routes through background.js to bypass page CSP
 loginBtn.addEventListener("click", async () => {
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
@@ -92,20 +90,22 @@ loginBtn.addEventListener("click", async () => {
 
     loginBtn.disabled = true;
     loginBtn.textContent = "Logging in...";
+    clearErrors();
 
     try {
-        const response = await fetch(`${API_URL}/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+        const response = await chrome.runtime.sendMessage({
+            type: "LOGIN",
+            email,
+            password
         });
 
-        const data = await response.json();
-
-        if (data.error) {
-            showError(loginError, data.error);
+        if (!response || !response.success) {
+            const errMsg = response?.data?.error || response?.data?.detail || "Login failed";
+            showError(loginError, errMsg);
             return;
         }
+
+        const data = response.data;
 
         if (data.access_token) {
             await chrome.storage.local.set({
@@ -122,9 +122,11 @@ loginBtn.addEventListener("click", async () => {
                     chrome.tabs.sendMessage(tab.id, { type: "AUTH_CHANGED" }).catch(() => {});
                 });
             });
+        } else {
+            showError(loginError, data.error || data.detail || "Login failed — no token received");
         }
     } catch (error) {
-        showError(loginError, "Connection error. Is the backend running?");
+        showError(loginError, "Extension error. Try reloading the extension.");
     } finally {
         loginBtn.disabled = false;
         loginBtn.textContent = "Login";
@@ -132,7 +134,7 @@ loginBtn.addEventListener("click", async () => {
 });
 
 
-// Register handler
+// Register handler — routes through background.js to bypass page CSP
 registerBtn.addEventListener("click", async () => {
     const email = registerEmail.value.trim();
     const password = registerPassword.value;
@@ -145,39 +147,38 @@ registerBtn.addEventListener("click", async () => {
 
     registerBtn.disabled = true;
     registerBtn.textContent = "Creating account...";
+    clearErrors();
 
     try {
-        const response = await fetch(`${API_URL}/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                email,
-                password,
-                company_id: companyId
-            })
+        const response = await chrome.runtime.sendMessage({
+            type: "REGISTER",
+            email,
+            password,
+            company_id: companyId
         });
 
-        const data = await response.json();
-
-        if (data.error) {
-            showError(registerError, data.error);
+        if (!response || !response.success) {
+            const errMsg = response?.data?.error || response?.data?.detail || "Registration failed";
+            showError(registerError, errMsg);
             return;
         }
+
+        const data = response.data;
 
         if (data.message === "User created") {
             registerSuccess.textContent = "Account created! You can now login.";
             registerSuccess.classList.remove("hidden");
 
-            // Clear form
             registerEmail.value = "";
             registerPassword.value = "";
             registerCompany.value = "";
 
-            // Switch to login after 2 seconds
             setTimeout(showLoginForm, 2000);
+        } else {
+            showError(registerError, data.error || data.detail || "Registration failed");
         }
     } catch (error) {
-        showError(registerError, "Connection error. Is the backend running?");
+        showError(registerError, "Extension error. Try reloading the extension.");
     } finally {
         registerBtn.disabled = false;
         registerBtn.textContent = "Create Account";
