@@ -5,11 +5,13 @@
   "description": "Company context assistant for AI chat platforms",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "tabs"
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*"
+    "http://127.0.0.1:8000/*",
+    "https://krabai.tech/*"
   ],
   "action": {
     "default_popup": "popup.html",
