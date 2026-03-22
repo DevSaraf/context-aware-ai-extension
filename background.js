@@ -1,4 +1,4 @@
-const API_URL = "https://krabai.azurewebsites.net";
+const API_URL = "https://krabai.tech";
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
