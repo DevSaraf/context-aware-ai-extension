@@ -500,7 +500,7 @@ const hmrPort = null;
 const socketHost = `${"localhost" || importMetaUrl.hostname}:${hmrPort || importMetaUrl.port}${"/"}`;
 const directSocketHost = "localhost:undefined/";
 const base = "/" || "/";
-const wsToken = "o3CFKl2FKxqJ";
+const wsToken = "pQWYzZzfLX6r";
 let socket;
 try {
   let fallback;
