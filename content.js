@@ -72,11 +72,11 @@ const STYLES = `
     right: 0;
     width: 340px;
     height: 100vh;
-    background: linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%);
-    color: #fff;
+    background: #262624;
+    color: #e8e6e1;
     z-index: 9999;
-    border-left: 1px solid #2a2a2a;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    border-left: 1px solid #333331;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-y: auto;
     box-shadow: -4px 0 20px rgba(0,0,0,0.3);
 }
@@ -90,14 +90,14 @@ const STYLES = `
 }
 
 #context-sidebar::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #3a3a38;
     border-radius: 3px;
 }
 
 .ctx-header {
     padding: 16px 20px;
-    border-bottom: 1px solid #2a2a2a;
-    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #333331;
+    background: rgba(30,30,28,0.9);
     position: sticky;
     top: 0;
     backdrop-filter: blur(10px);
@@ -118,13 +118,15 @@ const STYLES = `
 .ctx-logo svg {
     width: 24px;
     height: 24px;
+    color: #c6613f;
 }
 
 .ctx-title {
     font-size: 15px;
-    font-weight: 600;
-    color: #fff;
+    font-weight: 700;
+    color: #c6613f;
     margin: 0;
+    letter-spacing: 2px;
 }
 
 .ctx-status {
@@ -134,7 +136,8 @@ const STYLES = `
     font-size: 11px;
     padding: 4px 10px;
     border-radius: 12px;
-    background: rgba(255,255,255,0.05);
+    background: #1e1e1c;
+    border: 1px solid #333331;
 }
 
 .ctx-status-dot {
@@ -143,8 +146,8 @@ const STYLES = `
     border-radius: 50%;
 }
 
-.ctx-status.logged-in .ctx-status-dot { background: #22c55e; }
-.ctx-status.logged-out .ctx-status-dot { background: #ef4444; }
+.ctx-status.logged-in .ctx-status-dot { background: #5cb85c; }
+.ctx-status.logged-out .ctx-status-dot { background: #d9534f; }
 
 .ctx-content {
     padding: 16px 20px;
@@ -162,8 +165,8 @@ const STYLES = `
 .ctx-spinner {
     width: 32px;
     height: 32px;
-    border: 3px solid #333;
-    border-top-color: #3b82f6;
+    border: 3px solid #333331;
+    border-top-color: #c6613f;
     border-radius: 50%;
     animation: ctx-spin 0.8s linear infinite;
 }
@@ -174,7 +177,7 @@ const STYLES = `
 
 .ctx-loading-text {
     margin-top: 12px;
-    color: #888;
+    color: #9a9890;
     font-size: 13px;
 }
 
@@ -193,21 +196,21 @@ const STYLES = `
 
 .ctx-empty-title {
     font-size: 14px;
-    color: #888;
+    color: #9a9890;
     margin-bottom: 8px;
 }
 
 .ctx-empty-desc {
     font-size: 12px;
-    color: #555;
+    color: #6a6960;
     line-height: 1.5;
 }
 
 /* Error State */
 .ctx-error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
+    background: rgba(217, 83, 79, 0.1);
+    border: 1px solid rgba(217, 83, 79, 0.2);
+    border-radius: 10px;
     padding: 16px;
     display: flex;
     gap: 12px;
@@ -217,7 +220,7 @@ const STYLES = `
     flex-shrink: 0;
     width: 20px;
     height: 20px;
-    color: #ef4444;
+    color: #d9534f;
 }
 
 .ctx-error-content {
@@ -227,20 +230,20 @@ const STYLES = `
 .ctx-error-title {
     font-size: 13px;
     font-weight: 500;
-    color: #ef4444;
+    color: #d9534f;
     margin-bottom: 4px;
 }
 
 .ctx-error-msg {
     font-size: 12px;
-    color: #888;
+    color: #9a9890;
     line-height: 1.4;
 }
 
 /* AI Answer Card */
 .ctx-ai-answer {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: rgba(198, 97, 63, 0.1);
+    border: 1px solid rgba(198, 97, 63, 0.3);
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 20px;
@@ -251,7 +254,7 @@ const STYLES = `
     align-items: center;
     gap: 8px;
     margin-bottom: 12px;
-    color: #3b82f6;
+    color: #c6613f;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
@@ -264,7 +267,7 @@ const STYLES = `
 }
 
 .ctx-ai-body {
-    color: #fff;
+    color: #e8e6e1;
     font-size: 13px;
     line-height: 1.6;
     white-space: pre-wrap;
@@ -283,13 +286,13 @@ const STYLES = `
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #888;
+    color: #9a9890;
 }
 
 .ctx-results-count {
     font-size: 11px;
-    color: #555;
-    background: #222;
+    color: #6a6960;
+    background: #1e1e1c;
     padding: 2px 8px;
     border-radius: 10px;
 }
@@ -301,19 +304,19 @@ const STYLES = `
     gap: 8px;
     width: 100%;
     padding: 12px;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: #c6613f;
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 9px;
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
     margin-bottom: 16px;
 }
 
 .ctx-inject-btn:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: #d4734f;
     transform: translateY(-1px);
 }
 
@@ -322,7 +325,7 @@ const STYLES = `
 }
 
 .ctx-inject-btn.success {
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    background: #5cb85c;
 }
 
 .ctx-inject-btn svg {
@@ -332,8 +335,8 @@ const STYLES = `
 
 /* Result Card */
 .ctx-card {
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
+    background: #1e1e1c;
+    border: 1px solid #333331;
     border-radius: 10px;
     margin-bottom: 12px;
     overflow: hidden;
@@ -341,7 +344,7 @@ const STYLES = `
 }
 
 .ctx-card:hover {
-    border-color: #3a3a3a;
+    border-color: #4a4940;
 }
 
 .ctx-card-header {
@@ -350,7 +353,7 @@ const STYLES = `
     align-items: center;
     padding: 12px 14px;
     background: rgba(255,255,255,0.02);
-    border-bottom: 1px solid #2a2a2a;
+    border-bottom: 1px solid #333331;
 }
 
 .ctx-card-source {
@@ -362,7 +365,7 @@ const STYLES = `
 .ctx-card-icon {
     width: 28px;
     height: 28px;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    background: rgba(198, 97, 63, 0.12);
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -372,54 +375,14 @@ const STYLES = `
 .ctx-card-icon svg {
     width: 14px;
     height: 14px;
-    color: #fff;
+    color: #c6613f;
 }
 
 .ctx-card-label {
     font-size: 12px;
     font-weight: 500;
-    color: #fff;
+    color: #e8e6e1;
 }
-
-.ctx-card-id {
-    font-size: 11px;
-    color: #666;
-}
-
-/* Confidence Score */
-.ctx-confidence {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.ctx-confidence-bar {
-    width: 40px;
-    height: 4px;
-    background: #333;
-    border-radius: 2px;
-    overflow: hidden;
-}
-
-.ctx-confidence-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.3s ease;
-}
-
-.ctx-confidence-fill.high { background: #22c55e; }
-.ctx-confidence-fill.medium { background: #eab308; }
-.ctx-confidence-fill.low { background: #ef4444; }
-
-.ctx-confidence-text {
-    font-size: 11px;
-    font-weight: 500;
-    min-width: 35px;
-}
-
-.ctx-confidence-text.high { color: #22c55e; }
-.ctx-confidence-text.medium { color: #eab308; }
-.ctx-confidence-text.low { color: #ef4444; }
 
 .ctx-card-body {
     padding: 14px;
@@ -427,8 +390,8 @@ const STYLES = `
 
 .ctx-card-text {
     font-size: 13px;
-    color: #ccc;
-    line-height: 1.6;
+    color: #e8e6e1;
+    line-height: 1.7;
     margin: 0;
 }
 
@@ -442,7 +405,7 @@ const STYLES = `
     width: 56px;
     height: 56px;
     margin: 0 auto 20px;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    background: rgba(198, 97, 63, 0.12);
     border-radius: 16px;
     display: flex;
     align-items: center;
@@ -452,19 +415,19 @@ const STYLES = `
 .ctx-login-icon svg {
     width: 28px;
     height: 28px;
-    color: #fff;
+    color: #c6613f;
 }
 
 .ctx-login-title {
     font-size: 16px;
     font-weight: 600;
-    color: #fff;
+    color: #e8e6e1;
     margin-bottom: 8px;
 }
 
 .ctx-login-desc {
     font-size: 13px;
-    color: #666;
+    color: #6a6960;
     line-height: 1.5;
     margin-bottom: 20px;
 }
@@ -475,7 +438,7 @@ const STYLES = `
     justify-content: center;
     gap: 8px;
     font-size: 12px;
-    color: #555;
+    color: #6a6960;
     background: rgba(255,255,255,0.03);
     padding: 12px;
     border-radius: 8px;
@@ -487,76 +450,10 @@ const STYLES = `
     opacity: 0.5;
 }
 
-/* Feedback Buttons */
-.ctx-feedback {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #2a2a2a;
-}
-
-.ctx-feedback-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
-    background: transparent;
-    border: 1px solid #333;
-    border-radius: 6px;
-    color: #888;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.ctx-feedback-btn:hover {
-    border-color: #555;
-    color: #ccc;
-}
-
-.ctx-feedback-btn svg {
-    width: 14px;
-    height: 14px;
-}
-
-.ctx-feedback-btn.helpful:hover,
-.ctx-feedback-btn.helpful.active {
-    border-color: #22c55e;
-    color: #22c55e;
-    background: rgba(34, 197, 94, 0.1);
-}
-
-.ctx-feedback-btn.not-helpful:hover,
-.ctx-feedback-btn.not-helpful.active {
-    border-color: #ef4444;
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.ctx-feedback-btn.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-.ctx-feedback-thanks {
-    font-size: 11px;
-    color: #22c55e;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.ctx-feedback-thanks svg {
-    width: 14px;
-    height: 14px;
-}
-
 /* AI Answer Section */
 .ctx-answer {
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.15);
+    background: rgba(198, 97, 63, 0.08);
+    border: 1px solid rgba(198, 97, 63, 0.15);
     border-radius: 10px;
     padding: 16px;
     margin-bottom: 16px;
@@ -574,21 +471,21 @@ const STYLES = `
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.15);
+    color: #c6613f;
+    background: rgba(198, 97, 63, 0.15);
     padding: 3px 8px;
     border-radius: 4px;
 }
 
 .ctx-answer-confidence {
     font-size: 11px;
-    color: #888;
+    color: #9a9890;
     margin-left: auto;
 }
 
 .ctx-answer-text {
     font-size: 13px;
-    color: #ddd;
+    color: #e8e6e1;
     line-height: 1.7;
     margin: 0;
     white-space: pre-wrap;
@@ -596,13 +493,13 @@ const STYLES = `
 
 .ctx-answer-divider {
     border: none;
-    border-top: 1px solid #2a2a2a;
+    border-top: 1px solid #333331;
     margin: 16px 0;
 }
 
 .ctx-no-answer {
     font-size: 12px;
-    color: #666;
+    color: #6a6960;
     font-style: italic;
     margin-bottom: 12px;
 }
@@ -612,9 +509,9 @@ const STYLES = `
     width: 28px;
     height: 28px;
     background: rgba(255,255,255,0.08);
-    border: 1px solid #333;
+    border: 1px solid #333331;
     border-radius: 6px;
-    color: #888;
+    color: #9a9890;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -626,8 +523,8 @@ const STYLES = `
 
 .ctx-toggle-btn:hover {
     background: rgba(255,255,255,0.12);
-    color: #fff;
-    border-color: #555;
+    color: #e8e6e1;
+    border-color: #4a4940;
 }
 
 .ctx-toggle-btn svg {
@@ -644,7 +541,7 @@ const STYLES = `
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    background: #c6613f;
     border-radius: 10px 0 0 10px;
     display: flex;
     align-items: center;
@@ -659,6 +556,7 @@ const STYLES = `
 
 #context-sidebar-pill:hover {
     width: 48px;
+    background: #d4734f;
     box-shadow: -4px 0 20px rgba(0,0,0,0.4);
 }
 
@@ -730,8 +628,7 @@ function createSidebar() {
         <div class="ctx-header">
             <div class="ctx-header-top">
                 <div class="ctx-logo">
-                    ${ICONS.logo}
-                    <h1 class="ctx-title">Context Assistant</h1>
+                    <h1 class="ctx-title">KRAB</h1>
                 </div>
                 <div style="display:flex;align-items:center;">
                     <div id="auth-status" class="ctx-status logged-out">
@@ -838,7 +735,7 @@ function checkAuth() {
             output.innerHTML = `
                 <div class="ctx-login-prompt">
                     <div class="ctx-login-icon">${ICONS.user}</div>
-                    <div class="ctx-login-title">Welcome to Context Assistant</div>
+                    <div class="ctx-login-title">Welcome to KRAB</div>
                     <div class="ctx-login-desc">Login to access your company's knowledge base and get contextual suggestions.</div>
                     <div class="ctx-login-hint">
                         ${ICONS.click}
@@ -915,43 +812,20 @@ function showContext(results) {
 
     let cardsHtml = '';
     results.forEach((item, index) => {
-        // Use confidence if available, fallback to similarity
-        const confidence = item.confidence || item.similarity || 0;
-        const percent = (confidence * 100).toFixed(0);
-        const level = getConfidenceLevel(confidence);
         const sourceType = item.source_type || "Document";
-        const sourceId = item.source_id || (index + 1);
-        const chunkId = item.id || 0;
 
         cardsHtml += `
-            <div class="ctx-card" data-chunk-id="${chunkId}">
+            <div class="ctx-card">
                 <div class="ctx-card-header">
                     <div class="ctx-card-source">
                         <div class="ctx-card-icon">${ICONS.document}</div>
                         <div>
                             <div class="ctx-card-label">${sourceType}</div>
-                            <div class="ctx-card-id">#${sourceId}</div>
                         </div>
-                    </div>
-                    <div class="ctx-confidence">
-                        <div class="ctx-confidence-bar">
-                            <div class="ctx-confidence-fill ${level}" style="width: ${percent}%"></div>
-                        </div>
-                        <span class="ctx-confidence-text ${level}">${percent}%</span>
                     </div>
                 </div>
                 <div class="ctx-card-body">
-                    <p class="ctx-card-text">${item.text || ""}</p>
-                    <div class="ctx-feedback" id="feedback-${chunkId}">
-                        <button class="ctx-feedback-btn helpful" data-chunk-id="${chunkId}" data-feedback-type="helpful" data-confidence="${confidence}">
-                            ${ICONS.thumbsUp}
-                            <span>Helpful</span>
-                        </button>
-                        <button class="ctx-feedback-btn not-helpful" data-chunk-id="${chunkId}" data-feedback-type="not_helpful" data-confidence="${confidence}">
-                            ${ICONS.thumbsDown}
-                            <span>Not helpful</span>
-                        </button>
-                    </div>
+                    <p class="ctx-card-text">${escapeHtml(item.text || "")}</p>
                 </div>
             </div>
         `;
@@ -973,17 +847,6 @@ function showContext(results) {
     if (injectBtn) {
         injectBtn.addEventListener("click", injectContext);
     }
-
-    // Attach feedback button listeners (avoiding inline onclick due to CSP)
-    const feedbackBtns = output.querySelectorAll('.ctx-feedback-btn');
-    feedbackBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const chunkId = parseInt(this.dataset.chunkId);
-            const feedbackType = this.dataset.feedbackType;
-            const confidence = parseFloat(this.dataset.confidence);
-            submitFeedback(chunkId, feedbackType, confidence);
-        });
-    });
 }
 
 // Helper to escape HTML for security
@@ -1001,7 +864,7 @@ function showContextWithAnswer(data) {
     const answer = data.answer || "";
     const confidence = data.confidence || 0;
     const hasAnswer = data.has_answer !== false;
-    
+
     currentResults = results;
 
     if (!results || results.length === 0) {
@@ -1030,45 +893,23 @@ function showContextWithAnswer(data) {
         `;
     }
 
-    // Build result cards
+    // Build result cards (no feedback, no confidence bars)
     let cardsHtml = '';
     results.forEach((item, index) => {
-        const itemConfidence = item.confidence || item.similarity || 0;
-        const percent = (itemConfidence * 100).toFixed(0);
-        const level = getConfidenceLevel(itemConfidence);
         const sourceType = item.source_type || "Document";
-        const sourceId = item.source_id || (index + 1);
-        const chunkId = item.id || 0;
 
         cardsHtml += `
-            <div class="ctx-card" data-chunk-id="${chunkId}">
+            <div class="ctx-card">
                 <div class="ctx-card-header">
                     <div class="ctx-card-source">
                         <div class="ctx-card-icon">${ICONS.document}</div>
                         <div>
                             <div class="ctx-card-label">${sourceType}</div>
-                            <div class="ctx-card-id">#${sourceId}</div>
                         </div>
-                    </div>
-                    <div class="ctx-confidence">
-                        <div class="ctx-confidence-bar">
-                            <div class="ctx-confidence-fill ${level}" style="width: ${percent}%"></div>
-                        </div>
-                        <span class="ctx-confidence-text ${level}">${percent}%</span>
                     </div>
                 </div>
                 <div class="ctx-card-body">
                     <p class="ctx-card-text">${escapeHtml(item.text || "")}</p>
-                    <div class="ctx-feedback" id="feedback-${chunkId}">
-                        <button class="ctx-feedback-btn helpful" data-chunk-id="${chunkId}" data-feedback-type="helpful" data-confidence="${itemConfidence}">
-                            ${ICONS.thumbsUp}
-                            <span>Helpful</span>
-                        </button>
-                        <button class="ctx-feedback-btn not-helpful" data-chunk-id="${chunkId}" data-feedback-type="not_helpful" data-confidence="${itemConfidence}">
-                            ${ICONS.thumbsDown}
-                            <span>Not helpful</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         `;
@@ -1093,17 +934,6 @@ function showContextWithAnswer(data) {
     if (injectBtn) {
         injectBtn.addEventListener("click", injectContext);
     }
-
-    // Attach feedback listeners
-    const feedbackBtns = output.querySelectorAll('.ctx-feedback-btn');
-    feedbackBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const chunkId = parseInt(this.dataset.chunkId);
-            const feedbackType = this.dataset.feedbackType;
-            const conf = parseFloat(this.dataset.confidence);
-            submitFeedback(chunkId, feedbackType, conf);
-        });
-    });
 }
 
 function showError(message) {
