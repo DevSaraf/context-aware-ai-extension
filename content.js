@@ -386,6 +386,7 @@ const STYLES = `
 
 .ctx-card-body {
     padding: 14px;
+    cursor: pointer;
 }
 
 .ctx-card-text {
@@ -393,6 +394,73 @@ const STYLES = `
     color: #e8e6e1;
     line-height: 1.7;
     margin: 0;
+}
+
+.ctx-card-text.collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ctx-card-expand {
+    font-size: 11px;
+    color: #c6613f;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0 0;
+    font-family: inherit;
+    transition: color 0.2s;
+}
+
+.ctx-card-expand:hover {
+    color: #d4734f;
+}
+
+.ctx-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 12px;
+}
+
+.ctx-card-inject {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: rgba(198, 97, 63, 0.12);
+    color: #c6613f;
+    border: 1px solid rgba(198, 97, 63, 0.25);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.ctx-card-inject:hover {
+    background: rgba(198, 97, 63, 0.2);
+    border-color: rgba(198, 97, 63, 0.4);
+}
+
+.ctx-card-inject.success {
+    background: rgba(92, 184, 92, 0.12);
+    color: #5cb85c;
+    border-color: rgba(92, 184, 92, 0.25);
+}
+
+.ctx-card-inject svg {
+    width: 12px;
+    height: 12px;
+}
+
+.ctx-card-meta {
+    font-size: 10px;
+    color: #6a6960;
+    margin-left: auto;
 }
 
 /* Login Prompt */
@@ -813,19 +881,29 @@ function showContext(results) {
     let cardsHtml = '';
     results.forEach((item, index) => {
         const sourceType = item.source_type || "Document";
+        const wordCount = item.text ? item.text.split(' ').length : 0;
+        const isLong = (item.text || '').length > 200;
 
         cardsHtml += `
-            <div class="ctx-card">
+            <div class="ctx-card" data-chunk-index="${index}">
                 <div class="ctx-card-header">
                     <div class="ctx-card-source">
                         <div class="ctx-card-icon">${ICONS.document}</div>
                         <div>
-                            <div class="ctx-card-label">${sourceType}</div>
+                            <div class="ctx-card-label">${escapeHtml(sourceType)}</div>
                         </div>
                     </div>
                 </div>
-                <div class="ctx-card-body">
-                    <p class="ctx-card-text">${escapeHtml(item.text || "")}</p>
+                <div class="ctx-card-body" data-expand-index="${index}">
+                    <p class="ctx-card-text ${isLong ? 'collapsed' : ''}" id="ctx-text-${index}">${escapeHtml(item.text || "")}</p>
+                    ${isLong ? `<button class="ctx-card-expand" id="ctx-expand-${index}">Show more</button>` : ''}
+                </div>
+                <div class="ctx-card-footer">
+                    <button class="ctx-card-inject" data-inject-index="${index}">
+                        ${ICONS.inject}
+                        <span>Inject</span>
+                    </button>
+                    <span class="ctx-card-meta">${wordCount} words</span>
                 </div>
             </div>
         `;
@@ -838,15 +916,12 @@ function showContext(results) {
         </div>
         <button id="inject-context-btn" class="ctx-inject-btn">
             ${ICONS.inject}
-            <span>Add Context to Prompt</span>
+            <span>Add All Context to Prompt</span>
         </button>
         ${cardsHtml}
     `;
 
-    const injectBtn = document.getElementById("inject-context-btn");
-    if (injectBtn) {
-        injectBtn.addEventListener("click", injectContext);
-    }
+    attachCardListeners();
 }
 
 // Helper to escape HTML for security
@@ -893,23 +968,33 @@ function showContextWithAnswer(data) {
         `;
     }
 
-    // Build result cards (no feedback, no confidence bars)
+    // Build result cards — NO inline onclick (CSP blocked)
     let cardsHtml = '';
     results.forEach((item, index) => {
         const sourceType = item.source_type || "Document";
+        const wordCount = item.text ? item.text.split(' ').length : 0;
+        const isLong = (item.text || '').length > 200;
 
         cardsHtml += `
-            <div class="ctx-card">
+            <div class="ctx-card" data-chunk-index="${index}">
                 <div class="ctx-card-header">
                     <div class="ctx-card-source">
                         <div class="ctx-card-icon">${ICONS.document}</div>
                         <div>
-                            <div class="ctx-card-label">${sourceType}</div>
+                            <div class="ctx-card-label">${escapeHtml(sourceType)}</div>
                         </div>
                     </div>
                 </div>
-                <div class="ctx-card-body">
-                    <p class="ctx-card-text">${escapeHtml(item.text || "")}</p>
+                <div class="ctx-card-body" data-expand-index="${index}">
+                    <p class="ctx-card-text ${isLong ? 'collapsed' : ''}" id="ctx-text-${index}">${escapeHtml(item.text || "")}</p>
+                    ${isLong ? `<button class="ctx-card-expand" id="ctx-expand-${index}">Show more</button>` : ''}
+                </div>
+                <div class="ctx-card-footer">
+                    <button class="ctx-card-inject" data-inject-index="${index}">
+                        ${ICONS.inject}
+                        <span>Inject</span>
+                    </button>
+                    <span class="ctx-card-meta">${wordCount} words</span>
                 </div>
             </div>
         `;
@@ -923,17 +1008,14 @@ function showContextWithAnswer(data) {
         ${answerHtml}
         <button id="inject-context-btn" class="ctx-inject-btn">
             ${ICONS.inject}
-            <span>Add Context to Prompt</span>
+            <span>Add All Context to Prompt</span>
         </button>
         <hr class="ctx-answer-divider">
         ${cardsHtml}
     `;
 
-    // Attach inject button listener
-    const injectBtn = document.getElementById("inject-context-btn");
-    if (injectBtn) {
-        injectBtn.addEventListener("click", injectContext);
-    }
+    // Attach ALL event listeners via JS (CSP-safe)
+    attachCardListeners();
 }
 
 function showError(message) {
@@ -1065,6 +1147,107 @@ function injectContext() {
 }
 
 
+/* ---------------- CSP-SAFE EVENT ATTACHMENT ---------------- */
+
+function attachCardListeners() {
+    // "Add All Context" button
+    const injectAllBtn = document.getElementById("inject-context-btn");
+    if (injectAllBtn) {
+        injectAllBtn.addEventListener("click", injectContext);
+    }
+
+    // Per-chunk inject buttons
+    document.querySelectorAll('.ctx-card-inject[data-inject-index]').forEach(btn => {
+        btn.addEventListener("click", function() {
+            const idx = parseInt(this.getAttribute('data-inject-index'));
+            injectSingleChunk(idx);
+        });
+    });
+
+    // Expand/collapse on card body click
+    document.querySelectorAll('.ctx-card-body[data-expand-index]').forEach(body => {
+        body.addEventListener("click", function() {
+            const idx = parseInt(this.getAttribute('data-expand-index'));
+            toggleChunkExpand(idx);
+        });
+    });
+
+    // Expand buttons
+    document.querySelectorAll('.ctx-card-expand').forEach(btn => {
+        btn.addEventListener("click", function(e) {
+            e.stopPropagation();
+            const id = this.id.replace('ctx-expand-', '');
+            toggleChunkExpand(parseInt(id));
+        });
+    });
+}
+
+function toggleChunkExpand(index) {
+    const textEl = document.getElementById(`ctx-text-${index}`);
+    const expandBtn = document.getElementById(`ctx-expand-${index}`);
+    if (!textEl) return;
+    const isCollapsed = textEl.classList.contains('collapsed');
+    textEl.classList.toggle('collapsed');
+    if (expandBtn) {
+        expandBtn.textContent = isCollapsed ? 'Show less' : 'Show more';
+    }
+}
+
+function injectSingleChunk(index) {
+    if (!currentResults || !currentResults[index]) return;
+
+    const item = currentResults[index];
+
+    // Track usage
+    if (item.id) {
+        safeSendMessage({
+            type: "SUBMIT_FEEDBACK",
+            chunk_id: item.id,
+            feedback_type: "used",
+            query: currentQuery,
+            similarity_score: item.confidence || item.similarity
+        });
+    }
+
+    const textarea = getTextarea();
+    if (!textarea) {
+        showError("Could not find input field. Try clicking in the chat box first.");
+        return;
+    }
+
+    const currentText = textarea.innerText || textarea.value || "";
+    const source = item.source_type || "Source";
+    const contextText = `[Company Context]\n- ${source}: ${item.text}\n\n[Your Question]\n`;
+    const newText = contextText + currentText;
+
+    if (textarea.tagName === "TEXTAREA") {
+        textarea.value = newText;
+    } else if (textarea.contentEditable === "true" || currentPlatform?.isContentEditable) {
+        textarea.focus();
+        document.execCommand('selectAll', false, null);
+        document.execCommand('insertText', false, newText);
+        if (textarea.innerText !== newText) {
+            textarea.innerText = newText;
+        }
+    } else {
+        textarea.innerText = newText;
+    }
+
+    textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    textarea.dispatchEvent(new Event("change", { bubbles: true }));
+
+    const btn = document.querySelector(`.ctx-card-inject[data-inject-index="${index}"]`);
+    if (btn) {
+        btn.innerHTML = `${ICONS.check}<span>Injected!</span>`;
+        btn.classList.add("success");
+        setTimeout(() => {
+            btn.innerHTML = `${ICONS.inject}<span>Inject</span>`;
+            btn.classList.remove("success");
+        }, 2000);
+    }
+}
+
+
 /* ---------------- SEND PROMPT ---------------- */
 
 function sendPrompt(prompt) {
@@ -1117,6 +1300,9 @@ function attachListener() {
             const cleanPrompt = prompt.trim();
 
             if (!cleanPrompt || cleanPrompt.length < 3) return;
+
+            // Skip if this is injected context (prevents re-search loop)
+            if (cleanPrompt.startsWith("[Company Context]")) return;
 
             console.log("Detected prompt:", cleanPrompt.substring(0, 50) + "...");
 

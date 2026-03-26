@@ -62,6 +62,12 @@ function showLoggedInView(email, companyId) {
 
     userEmail.textContent = email || "Unknown";
     userCompany.textContent = companyId ? `Company: ${companyId}` : "";
+
+    // Set initials in avatar
+    const avatarEl = document.getElementById("user-avatar-icon");
+    if (avatarEl && email) {
+        avatarEl.textContent = email.substring(0, 2).toUpperCase();
+    }
 }
 
 

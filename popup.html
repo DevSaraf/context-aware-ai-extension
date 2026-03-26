@@ -12,9 +12,9 @@
         body {
             width: 320px;
             min-height: 280px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%);
-            color: #fff;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(180deg, #262624 0%, #1e1e1c 100%);
+            color: #e8e6e1;
             padding: 24px;
         }
 
@@ -28,28 +28,27 @@
         .logo {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #c6613f 0%, #a34e30 100%);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .logo svg {
-            width: 22px;
-            height: 22px;
+            font-size: 14px;
+            font-weight: 800;
             color: #fff;
+            letter-spacing: 1px;
         }
 
         h1 {
             font-size: 18px;
-            font-weight: 600;
-            color: #fff;
+            font-weight: 700;
+            color: #c6613f;
+            letter-spacing: 2px;
         }
 
         .subtitle {
             font-size: 12px;
-            color: #666;
+            color: #6a6960;
         }
 
         .form-group {
@@ -58,9 +57,9 @@
 
         label {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
-            color: #888;
+            color: #9a9890;
             margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -69,22 +68,24 @@
         input {
             width: 100%;
             padding: 12px 14px;
-            border: 1px solid #2a2a2a;
+            border: 1px solid #3a3a38;
             border-radius: 8px;
-            background: #1a1a1a;
-            color: #fff;
+            background: #1a1a18;
+            color: #e8e6e1;
             font-size: 14px;
+            font-family: inherit;
             transition: all 0.2s;
         }
 
         input:focus {
             outline: none;
-            border-color: #3b82f6;
-            background: #222;
+            border-color: #c6613f;
+            background: #262624;
+            box-shadow: 0 0 0 3px rgba(198, 97, 63, 0.15);
         }
 
         input::placeholder {
-            color: #555;
+            color: #4a4940;
         }
 
         button {
@@ -97,16 +98,18 @@
             cursor: pointer;
             transition: all 0.2s;
             margin-top: 8px;
+            font-family: inherit;
         }
 
         button.primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #c6613f 0%, #a34e30 100%);
             color: #fff;
         }
 
         button.primary:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: linear-gradient(135deg, #d4734f 0%, #b55a3a 100%);
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(198, 97, 63, 0.3);
         }
 
         button.primary:active {
@@ -114,23 +117,23 @@
         }
 
         button.secondary {
-            background: #222;
-            border: 1px solid #333;
-            color: #888;
+            background: #2e2e2c;
+            border: 1px solid #3a3a38;
+            color: #9a9890;
         }
 
         button.secondary:hover {
-            border-color: #444;
-            color: #fff;
+            border-color: #4a4940;
+            color: #e8e6e1;
         }
 
         button.danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%);
             color: #fff;
         }
 
         button.danger:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            background: linear-gradient(135deg, #c9302c 0%, #ac2925 100%);
         }
 
         button:disabled {
@@ -140,9 +143,9 @@
         }
 
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            background: rgba(217, 83, 79, 0.1);
+            border: 1px solid rgba(217, 83, 79, 0.2);
+            color: #d9534f;
             font-size: 12px;
             padding: 10px 12px;
             border-radius: 6px;
@@ -150,9 +153,9 @@
         }
 
         .success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            color: #22c55e;
+            background: rgba(92, 184, 92, 0.1);
+            border: 1px solid rgba(92, 184, 92, 0.2);
+            color: #5cb85c;
             font-size: 12px;
             padding: 10px 12px;
             border-radius: 6px;
@@ -166,30 +169,28 @@
         .user-avatar {
             width: 64px;
             height: 64px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            background: linear-gradient(135deg, #c6613f 0%, #a34e30 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 16px;
-        }
-
-        .user-avatar svg {
-            width: 32px;
-            height: 32px;
+            font-size: 22px;
+            font-weight: 700;
             color: #fff;
+            letter-spacing: 1px;
         }
 
         .user-email {
             font-size: 15px;
             font-weight: 500;
-            color: #fff;
+            color: #e8e6e1;
             margin-bottom: 4px;
         }
 
         .user-company {
             font-size: 13px;
-            color: #666;
+            color: #6a6960;
             margin-bottom: 24px;
         }
 
@@ -197,11 +198,11 @@
             text-align: center;
             margin-top: 20px;
             font-size: 13px;
-            color: #666;
+            color: #6a6960;
         }
 
         .toggle-link a {
-            color: #3b82f6;
+            color: #c6613f;
             cursor: pointer;
             text-decoration: none;
             font-weight: 500;
@@ -209,6 +210,7 @@
 
         .toggle-link a:hover {
             text-decoration: underline;
+            color: #d4734f;
         }
 
         .hidden {
@@ -217,7 +219,7 @@
 
         .divider {
             height: 1px;
-            background: #2a2a2a;
+            background: #3a3a38;
             margin: 16px 0;
         }
 
@@ -232,14 +234,9 @@
     <!-- Login Form -->
     <div id="login-form">
         <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                </svg>
-            </div>
+            <div class="logo">K</div>
             <div>
-                <h1>Context Assistant</h1>
+                <h1>KRAB</h1>
                 <p class="subtitle">Login to continue</p>
             </div>
         </div>
@@ -266,15 +263,10 @@
     <!-- Register Form -->
     <div id="register-form" class="hidden">
         <div class="header">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
-                </svg>
-            </div>
+            <div class="logo">K</div>
             <div>
-                <h1>Create Account</h1>
-                <p class="subtitle">Join Context Assistant</p>
+                <h1>KRAB</h1>
+                <p class="subtitle">Create your account</p>
             </div>
         </div>
 
@@ -305,12 +297,7 @@
 
     <!-- Logged In View -->
     <div id="logged-in" class="hidden logged-in">
-        <div class="user-avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-            </svg>
-        </div>
+        <div class="user-avatar" id="user-avatar-icon">U</div>
 
         <p class="user-email" id="user-email"></p>
         <p class="user-company" id="user-company"></p>
