@@ -1,4 +1,5 @@
 // DOM Elements
+//grab references to various HTML elements in your popup (like forms, input fields, buttons, and error message containers) using their specific id attributes.
 const loginForm = document.getElementById("login-form");
 const registerForm = document.getElementById("register-form");
 const loggedInView = document.getElementById("logged-in");
@@ -27,7 +28,9 @@ const showLoginLink = document.getElementById("show-login");
 // Check auth status on load
 document.addEventListener("DOMContentLoaded", checkAuthStatus);
 
-
+//It accesses Chrome's local storage API (chrome.storage.local.get) to retrieve the token, email, and company_id.
+//It checks if a token exists. If it does, the user is authenticated, and it calls showLoggedInView().
+//If no token exists, it calls showLoginForm() to prompt the user to log in.
 async function checkAuthStatus() {
     const data = await chrome.storage.local.get(["token", "email", "company_id"]);
 
@@ -54,7 +57,7 @@ function showRegisterForm() {
     clearErrors();
 }
 
-
+//Displays the authenticated user dashboard.
 function showLoggedInView(email, companyId) {
     loginForm.classList.add("hidden");
     registerForm.classList.add("hidden");
@@ -84,7 +87,7 @@ function showError(element, message) {
 }
 
 
-// Login handler — routes through background.js to bypass page CSP
+// Executes when the user clicks the Login button.
 loginBtn.addEventListener("click", async () => {
     const email = loginEmail.value.trim();
     const password = loginPassword.value;
@@ -99,7 +102,7 @@ loginBtn.addEventListener("click", async () => {
     clearErrors();
 
     try {
-        const response = await chrome.runtime.sendMessage({
+        const response = await chrome.runtime.sendMessage({      //Uses chrome.runtime.sendMessage to send the credentials to the background script (background.js). The comment explicitly states this is to bypass page CSP (Content Security Policy), which is a common pattern in Chrome extensions when making external API calls.
             type: "LOGIN",
             email,
             password
@@ -220,6 +223,6 @@ copyTokenBtn.addEventListener("click", async () => {
 });
 
 
-// Toggle between forms
+// Attaches the UI toggle functions to the hyperlink texts at the bottom of the forms (e.g., "Don't have an account? Register here").Toggle between forms
 showRegisterLink.addEventListener("click", showRegisterForm);
 showLoginLink.addEventListener("click", showLoginForm);
