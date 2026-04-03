@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,153 +14,170 @@
         body {
             width: 320px;
             min-height: 280px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(180deg, #0f0f0f 0%, #1a1a1a 100%);
-            color: #fff;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #262624;
+            color: #e8e6e1;
             padding: 24px;
         }
 
+        /* ── Header ── */
         .header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
+            gap: 14px;
+            margin-bottom: 28px;
         }
 
         .logo {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            width: 42px;
+            height: 42px;
+            background: rgba(198, 97, 63, 0.15);
+            border: 1px solid rgba(198, 97, 63, 0.3);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .logo svg {
             width: 22px;
             height: 22px;
-            color: #fff;
+            color: #c6613f;
         }
 
         h1 {
             font-size: 18px;
-            font-weight: 600;
-            color: #fff;
+            font-weight: 700;
+            color: #c6613f;
+            letter-spacing: 3px;
         }
 
         .subtitle {
             font-size: 12px;
-            color: #666;
+            color: #6a6960;
+            margin-top: 2px;
         }
 
+        /* ── Form Elements ── */
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: #888;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9a9890;
             margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
 
         input {
             width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #2a2a2a;
+            padding: 11px 14px;
+            border: 1px solid #333331;
             border-radius: 8px;
-            background: #1a1a1a;
-            color: #fff;
-            font-size: 14px;
+            background: #1e1e1c;
+            color: #e8e6e1;
+            font-size: 13px;
+            font-family: inherit;
             transition: all 0.2s;
         }
 
         input:focus {
             outline: none;
-            border-color: #3b82f6;
-            background: #222;
+            border-color: #c6613f;
+            background: #2a2a28;
+            box-shadow: 0 0 0 3px rgba(198, 97, 63, 0.1);
         }
 
         input::placeholder {
-            color: #555;
+            color: #4a4940;
         }
 
+        /* ── Buttons ── */
         button {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
+            font-family: inherit;
             cursor: pointer;
             transition: all 0.2s;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         button.primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: #c6613f;
             color: #fff;
         }
 
         button.primary:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #d4734f;
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(198, 97, 63, 0.3);
         }
 
         button.primary:active {
             transform: translateY(0);
+            box-shadow: none;
         }
 
         button.secondary {
-            background: #222;
-            border: 1px solid #333;
-            color: #888;
+            background: #1e1e1c;
+            border: 1px solid #333331;
+            color: #9a9890;
         }
 
         button.secondary:hover {
-            border-color: #444;
-            color: #fff;
+            border-color: #4a4940;
+            color: #e8e6e1;
         }
 
         button.danger {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-            color: #fff;
+            background: rgba(217, 83, 79, 0.15);
+            border: 1px solid rgba(217, 83, 79, 0.3);
+            color: #d9534f;
         }
 
         button.danger:hover {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            background: rgba(217, 83, 79, 0.25);
+            border-color: rgba(217, 83, 79, 0.5);
         }
 
         button:disabled {
-            opacity: 0.6;
+            opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
+            transform: none !important;
+            box-shadow: none !important;
         }
 
+        /* ── Feedback Messages ── */
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            background: rgba(217, 83, 79, 0.1);
+            border: 1px solid rgba(217, 83, 79, 0.2);
+            color: #d9534f;
             font-size: 12px;
             padding: 10px 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-top: 12px;
         }
 
         .success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.2);
-            color: #22c55e;
+            background: rgba(92, 184, 92, 0.1);
+            border: 1px solid rgba(92, 184, 92, 0.2);
+            color: #5cb85c;
             font-size: 12px;
             padding: 10px 12px;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-top: 12px;
         }
 
+        /* ── Logged-In View ── */
         .logged-in {
             text-align: center;
         }
@@ -166,65 +185,67 @@
         .user-avatar {
             width: 64px;
             height: 64px;
-            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            background: rgba(198, 97, 63, 0.15);
+            border: 2px solid rgba(198, 97, 63, 0.3);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 16px;
-        }
-
-        .user-avatar svg {
-            width: 32px;
-            height: 32px;
-            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            color: #c6613f;
+            letter-spacing: 1px;
         }
 
         .user-email {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
-            color: #fff;
+            color: #e8e6e1;
             margin-bottom: 4px;
         }
 
         .user-company {
-            font-size: 13px;
-            color: #666;
+            font-size: 12px;
+            color: #6a6960;
             margin-bottom: 24px;
         }
 
+        /* ── Toggle Link ── */
         .toggle-link {
             text-align: center;
             margin-top: 20px;
-            font-size: 13px;
-            color: #666;
+            font-size: 12px;
+            color: #6a6960;
         }
 
         .toggle-link a {
-            color: #3b82f6;
+            color: #c6613f;
             cursor: pointer;
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
         }
 
         .toggle-link a:hover {
             text-decoration: underline;
+            color: #d4734f;
         }
 
         .hidden {
             display: none;
         }
 
-        .divider {
-            height: 1px;
-            background: #2a2a2a;
-            margin: 16px 0;
-        }
-
         .btn-group {
             display: flex;
             flex-direction: column;
             gap: 10px;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: #333331;
+            margin: 16px 0;
         }
     </style>
 </head>
@@ -233,13 +254,15 @@
     <div id="login-form">
         <div class="header">
             <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    <line x1="9" y1="7" x2="15" y2="7"/>
+                    <line x1="9" y1="11" x2="15" y2="11"/>
                 </svg>
             </div>
             <div>
-                <h1>Context Assistant</h1>
+                <h1>KRAB</h1>
                 <p class="subtitle">Login to continue</p>
             </div>
         </div>
@@ -267,14 +290,16 @@
     <div id="register-form" class="hidden">
         <div class="header">
             <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6v6l4 2"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="8.5" cy="7" r="4"/>
+                    <line x1="20" y1="8" x2="20" y2="14"/>
+                    <line x1="23" y1="11" x2="17" y2="11"/>
                 </svg>
             </div>
             <div>
-                <h1>Create Account</h1>
-                <p class="subtitle">Join Context Assistant</p>
+                <h1>KRAB</h1>
+                <p class="subtitle">Create your account</p>
             </div>
         </div>
 
@@ -306,10 +331,7 @@
     <!-- Logged In View -->
     <div id="logged-in" class="hidden logged-in">
         <div class="user-avatar">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-            </svg>
+            <span id="user-avatar-icon"></span>
         </div>
 
         <p class="user-email" id="user-email"></p>
