@@ -1,39 +1,108 @@
 {
   "manifest_version": 3,
-  "name": "KRAB — Knowledge Assistant",
-  "version": "1.1.0",
-  "description": "AI-powered knowledge assistant for chat platforms",
+  "name": "KRAB — AI Knowledge Assistant",
+  "version": "2.0.0",
+  "description": "Universal AI knowledge assistant. Search your company's knowledge base from any app — Gmail, GitHub, Jira, Slack, Salesforce, and more.",
 
   "permissions": [
-    "storage",
+    "tabs",
     "activeTab",
-    "tabs"
+    "storage",
+    "contextMenus",
+    "sidePanel"
   ],
 
   "host_permissions": [
     "http://localhost:8000/*",
     "http://127.0.0.1:8000/*",
-    "https://krabai.tech/*"
+    "https://krabai.tech/*",
+    "https://mail.google.com/*",
+    "https://github.com/*",
+    "https://*.github.com/*",
+    "https://linear.app/*",
+    "https://app.slack.com/*",
+    "https://*.slack.com/*",
+    "https://*.notion.so/*",
+    "https://*.atlassian.net/*",
+    "https://*.atlassian.com/*",
+    "https://*.salesforce.com/*",
+    "https://*.lightning.force.com/*",
+    "https://*.zendesk.com/*",
+    "https://*.hubspot.com/*",
+    "https://*.freshdesk.com/*",
+    "https://*.intercom.com/*",
+    "https://*.servicenow.com/*",
+    "https://*.jira.com/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*",
+    "https://docs.google.com/*",
+    "https://drive.google.com/*",
+    "https://calendar.google.com/*",
+    "https://outlook.office.com/*",
+    "https://outlook.live.com/*",
+    "https://*.monday.com/*",
+    "https://*.asana.com/*",
+    "https://*.clickup.com/*",
+    "https://*.trello.com/*",
+    "https://*.figma.com/*",
+    "https://*.miro.com/*",
+    "https://*.confluence.com/*",
+    "https://*.dropbox.com/*",
+    "https://*.box.com/*",
+    "https://*.sharepoint.com/*",
+    "<all_urls>"
   ],
 
   "action": {
     "default_popup": "popup.html",
-    "default_title": "KRAB"
+    "default_title": "KRAB",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
 
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
 
   "content_scripts": [
     {
-      "matches": [
-        "https://chat.openai.com/*",
-        "https://chatgpt.com/*",
-        "https://claude.ai/*",
-        "https://gemini.google.com/*"
-      ],
-      "js": ["content.js"]
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content-styles.css"],
+      "run_at": "document_idle"
     }
-  ]
+  ],
+
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open KRAB sidebar"
+    },
+    "search_krab": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+J",
+        "mac": "Command+Shift+J"
+      },
+      "description": "Quick search KRAB"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }

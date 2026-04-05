@@ -1,10 +1,90 @@
+/**
+ * KRAB Background Service Worker
+ * Handles API calls, context menus, side panel, and cross-tab messaging
+ */
+
 const API_URL = "https://krabai.tech";
 
+// Initialize extension
+chrome.runtime.onInstalled.addListener(() => {
+    // Create context menu items
+    chrome.contextMenus.create({
+        id: "krab-search",
+        title: "Search KRAB for \"%s\"",
+        contexts: ["selection"]
+    });
 
+    chrome.contextMenus.create({
+        id: "krab-explain",
+        title: "Explain with KRAB",
+        contexts: ["selection"]
+    });
+
+    chrome.contextMenus.create({
+        id: "krab-summarize",
+        title: "Summarize this page",
+        contexts: ["page"]
+    });
+
+    chrome.contextMenus.create({
+        id: "krab-create-ticket",
+        title: "Create support ticket",
+        contexts: ["page", "selection"]
+    });
+
+    console.log("KRAB extension installed");
+});
+
+// Context menu click handler
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+    const action = info.menuItemId;
+    const selectedText = info.selectionText || "";
+    const pageUrl = tab.url;
+    const pageTitle = tab.title;
+
+    switch (action) {
+        case "krab-search":
+            await openSidePanelWithQuery(tab, selectedText);
+            break;
+        case "krab-explain":
+            await openSidePanelWithQuery(tab, `Explain: ${selectedText}`);
+            break;
+        case "krab-summarize":
+            await openSidePanelWithQuery(tab, `Summarize this page: ${pageTitle}`);
+            break;
+        case "krab-create-ticket":
+            chrome.tabs.create({ url: `${API_URL.replace('/api', '')}/dashboard.html#tickets?new=true&context=${encodeURIComponent(selectedText || pageTitle)}` });
+            break;
+    }
+});
+
+// Open side panel with a query
+async function openSidePanelWithQuery(tab, query) {
+    try {
+        await chrome.sidePanel.open({ tabId: tab.id });
+        // Send query to side panel
+        setTimeout(() => {
+            chrome.runtime.sendMessage({ type: "SIDEPANEL_QUERY", query });
+        }, 500);
+    } catch (error) {
+        console.error("Failed to open side panel:", error);
+    }
+}
+
+// Command handler (keyboard shortcuts)
+chrome.commands.onCommand.addListener(async (command) => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (command === "search_krab") {
+        chrome.tabs.sendMessage(tab.id, { type: "OPEN_QUICK_SEARCH" });
+    }
+});
+
+// Message handler
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     if (request.type === "SEARCH_CONTEXT") {
-        handleContextSearch(request.prompt, sendResponse);
+        handleContextSearch(request.prompt, request.context, sendResponse);
         return true;
     }
 
@@ -28,7 +108,60 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         return true;
     }
 
+    if (request.type === "OPEN_SIDEPANEL") {
+        chrome.sidePanel.open({ tabId: sender.tab.id });
+        sendResponse({ success: true });
+        return true;
+    }
+
+    if (request.type === "GET_PAGE_CONTEXT") {
+        chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
+            sendResponse({
+                url: tab?.url || "",
+                title: tab?.title || "",
+                app: detectApp(tab?.url || "")
+            });
+        });
+        return true;
+    }
+
 });
+
+
+// Detect app from URL
+function detectApp(url) {
+    const appPatterns = {
+        'Gmail': /mail\.google\.com/,
+        'GitHub': /github\.com/,
+        'Slack': /slack\.com/,
+        'Jira': /atlassian\.net.*jira|jira\.com/,
+        'Confluence': /atlassian\.net.*wiki|confluence/,
+        'Notion': /notion\.so/,
+        'Salesforce': /salesforce\.com|lightning\.force\.com/,
+        'Zendesk': /zendesk\.com/,
+        'HubSpot': /hubspot\.com/,
+        'Linear': /linear\.app/,
+        'ChatGPT': /chat\.openai\.com|chatgpt\.com/,
+        'Claude': /claude\.ai/,
+        'Gemini': /gemini\.google\.com/,
+        'Google Drive': /drive\.google\.com/,
+        'Google Docs': /docs\.google\.com/,
+        'Figma': /figma\.com/,
+        'Trello': /trello\.com/,
+        'Asana': /asana\.com/,
+        'Monday': /monday\.com/,
+        'ClickUp': /clickup\.com/,
+        'Intercom': /intercom\.com/,
+        'Freshdesk': /freshdesk\.com/
+    };
+
+    for (const [app, pattern] of Object.entries(appPatterns)) {
+        if (pattern.test(url)) {
+            return app;
+        }
+    }
+    return 'Web';
+}
 
 
 async function handleLogin(request, sendResponse) {
@@ -61,7 +194,7 @@ async function handleRegister(request, sendResponse) {
 }
 
 
-async function handleContextSearch(prompt, sendResponse) {
+async function handleContextSearch(prompt, context, sendResponse) {
 
     try {
         const data = await chrome.storage.local.get(["token"]);
@@ -80,7 +213,10 @@ async function handleContextSearch(prompt, sendResponse) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${data.token}`
             },
-            body: JSON.stringify({ prompt })
+            body: JSON.stringify({ 
+                prompt,
+                context: context || {}
+            })
         });
 
         if (response.status === 401) {

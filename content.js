@@ -1,9 +1,11 @@
-console.log("Context AI Extension Loaded");
+console.log("KRAB Extension Loaded");
 
 let listenerAttached = false;
 let debounceTimer = null;
 let currentResults = [];
 let currentQuery = "";
+let quickSearchModal = null;
+let selectionPopup = null;
 
 // Helper to safely send messages (handles extension context invalidation)
 function safeSendMessage(message, callback) {
@@ -24,7 +26,7 @@ function safeSendMessage(message, callback) {
     }
 }
 
-/* ---------------- PLATFORM DETECTION ---------------- */
+/* ---------------- PLATFORM DETECTION (ENHANCED) ---------------- */
 
 const PLATFORMS = {
     chatgpt: {
@@ -46,6 +48,90 @@ const PLATFORMS = {
         hostname: ['gemini.google.com'],
         textareaSelector: 'rich-textarea div[contenteditable="true"], .ql-editor',
         mainSelector: 'main',
+        isContentEditable: true
+    },
+    gmail: {
+        name: 'Gmail',
+        hostname: ['mail.google.com'],
+        textareaSelector: 'div[aria-label="Message Body"], div[contenteditable="true"]',
+        mainSelector: 'div[role="main"]',
+        isContentEditable: true
+    },
+    github: {
+        name: 'GitHub',
+        hostname: ['github.com'],
+        textareaSelector: 'textarea[name="comment[body]"], textarea.js-comment-field, #issue_body, #pull_request_body',
+        mainSelector: 'main',
+        isContentEditable: false
+    },
+    slack: {
+        name: 'Slack',
+        hostname: ['app.slack.com', 'slack.com'],
+        textareaSelector: 'div[data-message-input="true"], div.ql-editor',
+        mainSelector: 'div.p-workspace',
+        isContentEditable: true
+    },
+    jira: {
+        name: 'Jira',
+        hostname: ['atlassian.net'],
+        textareaSelector: 'div[contenteditable="true"], textarea',
+        mainSelector: 'main, div[role="main"]',
+        isContentEditable: true
+    },
+    notion: {
+        name: 'Notion',
+        hostname: ['notion.so'],
+        textareaSelector: 'div[contenteditable="true"]',
+        mainSelector: 'div.notion-frame',
+        isContentEditable: true
+    },
+    salesforce: {
+        name: 'Salesforce',
+        hostname: ['salesforce.com', 'lightning.force.com'],
+        textareaSelector: 'textarea, div[contenteditable="true"]',
+        mainSelector: 'div.slds-template__container',
+        isContentEditable: false
+    },
+    zendesk: {
+        name: 'Zendesk',
+        hostname: ['zendesk.com'],
+        textareaSelector: 'div[contenteditable="true"], textarea',
+        mainSelector: 'main',
+        isContentEditable: true
+    },
+    hubspot: {
+        name: 'HubSpot',
+        hostname: ['hubspot.com'],
+        textareaSelector: 'div[contenteditable="true"], textarea',
+        mainSelector: 'main',
+        isContentEditable: true
+    },
+    linear: {
+        name: 'Linear',
+        hostname: ['linear.app'],
+        textareaSelector: 'div[contenteditable="true"]',
+        mainSelector: 'main',
+        isContentEditable: true
+    },
+    figma: {
+        name: 'Figma',
+        hostname: ['figma.com'],
+        textareaSelector: 'textarea',
+        mainSelector: 'div[class*="editor"]',
+        isContentEditable: false
+    },
+    gdocs: {
+        name: 'Google Docs',
+        hostname: ['docs.google.com'],
+        textareaSelector: 'div.kix-page',
+        mainSelector: 'div.kix-appview',
+        isContentEditable: true
+    },
+    outlook: {
+        name: 'Outlook',
+        hostname: ['outlook.office.com', 'outlook.live.com'],
+        textareaSelector: 'div[contenteditable="true"]',
+        mainSelector: 'div[role="main"]',
         isContentEditable: true
     }
 };
@@ -839,7 +925,312 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         currentResults = [];
     }
 
+    if (request.type === "OPEN_QUICK_SEARCH") {
+        openQuickSearchModal();
+        sendResponse({ success: true });
+    }
+
+    if (request.type === "INSERT_TEXT") {
+        insertTextAtCursor(request.text);
+        sendResponse({ success: true });
+    }
+
+    if (request.type === "GET_SELECTION") {
+        const selection = window.getSelection().toString();
+        sendResponse({ selection });
+    }
+
+    return true;
 });
+
+/* ---------------- QUICK SEARCH MODAL ---------------- */
+
+function openQuickSearchModal() {
+    if (quickSearchModal) {
+        quickSearchModal.remove();
+    }
+
+    quickSearchModal = document.createElement('div');
+    quickSearchModal.className = 'krab-modal-overlay';
+    quickSearchModal.innerHTML = `
+        <div class="krab-modal">
+            <div class="krab-modal-header">
+                <img class="krab-modal-logo" src="${chrome.runtime.getURL('icons/icon48.png')}" alt="KRAB">
+                <input type="text" class="krab-modal-input" placeholder="Search your knowledge base..." autofocus>
+                <span class="krab-modal-shortcut">ESC to close</span>
+            </div>
+            <div class="krab-modal-content">
+                <div class="krab-modal-empty" style="text-align: center; padding: 40px; color: #94a3b8;">
+                    Type to search across all your connected apps and documents
+                </div>
+            </div>
+            <div class="krab-modal-footer">
+                <span>⌘J to toggle • Enter to search</span>
+                <span>Powered by KRAB</span>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(quickSearchModal);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        quickSearchModal.classList.add('visible');
+    });
+
+    const input = quickSearchModal.querySelector('.krab-modal-input');
+    const content = quickSearchModal.querySelector('.krab-modal-content');
+
+    // Close on escape or overlay click
+    quickSearchModal.addEventListener('click', (e) => {
+        if (e.target === quickSearchModal) {
+            closeQuickSearchModal();
+        }
+    });
+
+    document.addEventListener('keydown', handleModalKeydown);
+
+    // Search on enter
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const query = input.value.trim();
+            if (query) {
+                performQuickSearch(query, content);
+            }
+        }
+    });
+
+    // Debounced live search
+    let searchTimer;
+    input.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            const query = input.value.trim();
+            if (query.length >= 3) {
+                performQuickSearch(query, content);
+            }
+        }, 300);
+    });
+}
+
+function handleModalKeydown(e) {
+    if (e.key === 'Escape') {
+        closeQuickSearchModal();
+    }
+}
+
+function closeQuickSearchModal() {
+    if (quickSearchModal) {
+        quickSearchModal.classList.remove('visible');
+        setTimeout(() => {
+            quickSearchModal.remove();
+            quickSearchModal = null;
+        }, 200);
+        document.removeEventListener('keydown', handleModalKeydown);
+    }
+}
+
+async function performQuickSearch(query, contentEl) {
+    contentEl.innerHTML = `
+        <div class="krab-modal-loading">
+            <div class="krab-modal-spinner"></div>
+            Searching...
+        </div>
+    `;
+
+    safeSendMessage({ type: 'SEARCH_CONTEXT', prompt: query }, (response) => {
+        if (!response || !response.success) {
+            contentEl.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #ef4444;">
+                    ${response?.error || 'Search failed. Please try again.'}
+                </div>
+            `;
+            return;
+        }
+
+        const data = response.data;
+        const answer = data.answer || data.response;
+        const sources = data.sources || data.chunks || [];
+
+        let html = '';
+
+        if (answer) {
+            html += `
+                <div class="krab-modal-ai-answer">
+                    <div class="krab-modal-ai-header">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
+                        </svg>
+                        AI Answer
+                    </div>
+                    <div class="krab-modal-ai-text">${escapeHtml(answer)}</div>
+                </div>
+            `;
+        }
+
+        if (sources.length > 0) {
+            sources.slice(0, 5).forEach(source => {
+                const title = source.title || source.source_title || 'Untitled';
+                const text = (source.text || source.content || '').substring(0, 150);
+                html += `
+                    <div class="krab-modal-result" onclick="window.krabInsertText('${escapeHtml(source.text || '')}')">
+                        <div class="krab-modal-result-title">${escapeHtml(title)}</div>
+                        <div class="krab-modal-result-snippet">${escapeHtml(text)}...</div>
+                    </div>
+                `;
+            });
+        } else if (!answer) {
+            html = `
+                <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                    No results found for "${escapeHtml(query)}"
+                </div>
+            `;
+        }
+
+        contentEl.innerHTML = html;
+    });
+}
+
+// Global function for inserting text from modal
+window.krabInsertText = function(text) {
+    insertTextAtCursor(text);
+    closeQuickSearchModal();
+    showKrabToast('Text inserted');
+};
+
+function insertTextAtCursor(text) {
+    const platform = currentPlatform;
+    if (!platform) {
+        // Fallback: try to find any focused editable element
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.isContentEditable || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'INPUT')) {
+            if (activeEl.isContentEditable) {
+                document.execCommand('insertText', false, text);
+            } else {
+                const start = activeEl.selectionStart;
+                const end = activeEl.selectionEnd;
+                activeEl.value = activeEl.value.substring(0, start) + text + activeEl.value.substring(end);
+                activeEl.selectionStart = activeEl.selectionEnd = start + text.length;
+            }
+        }
+        return;
+    }
+
+    const textarea = document.querySelector(platform.textareaSelector);
+    if (!textarea) return;
+
+    textarea.focus();
+
+    if (platform.isContentEditable) {
+        document.execCommand('insertText', false, text);
+    } else {
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || 0;
+        textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+}
+
+function showKrabToast(message, type = 'success') {
+    const existing = document.querySelector('.krab-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = `krab-toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add('visible');
+    });
+
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/* ---------------- SELECTION POPUP ---------------- */
+
+document.addEventListener('mouseup', (e) => {
+    const selection = window.getSelection().toString().trim();
+    
+    if (selection && selection.length > 10 && selection.length < 500) {
+        showSelectionPopup(e.clientX, e.clientY, selection);
+    } else {
+        hideSelectionPopup();
+    }
+});
+
+function showSelectionPopup(x, y, text) {
+    hideSelectionPopup();
+
+    selectionPopup = document.createElement('div');
+    selectionPopup.className = 'krab-selection-popup';
+    selectionPopup.style.left = `${x}px`;
+    selectionPopup.style.top = `${y + 10}px`;
+    selectionPopup.innerHTML = `
+        <button class="krab-selection-btn" data-action="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+            </svg>
+            Search KRAB
+        </button>
+        <button class="krab-selection-btn" data-action="explain">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Explain
+        </button>
+    `;
+
+    document.body.appendChild(selectionPopup);
+
+    requestAnimationFrame(() => {
+        selectionPopup.classList.add('visible');
+    });
+
+    selectionPopup.querySelectorAll('.krab-selection-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = btn.dataset.action;
+            if (action === 'search') {
+                openQuickSearchModal();
+                setTimeout(() => {
+                    const input = document.querySelector('.krab-modal-input');
+                    if (input) input.value = text;
+                }, 100);
+            } else if (action === 'explain') {
+                openQuickSearchModal();
+                setTimeout(() => {
+                    const input = document.querySelector('.krab-modal-input');
+                    if (input) {
+                        input.value = `Explain: ${text}`;
+                        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+                    }
+                }, 100);
+            }
+            hideSelectionPopup();
+        });
+    });
+}
+
+function hideSelectionPopup() {
+    if (selectionPopup) {
+        selectionPopup.remove();
+        selectionPopup = null;
+    }
+}
 
 
 /* ---------------- DISPLAY CONTEXT ---------------- */
