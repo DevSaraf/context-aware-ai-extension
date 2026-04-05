@@ -631,12 +631,6 @@ const STYLES = `
     border-radius: 4px;
 }
 
-.ctx-answer-confidence {
-    font-size: 11px;
-    color: #9a9890;
-    margin-left: auto;
-}
-
 .ctx-answer-text {
     font-size: 13px;
     color: #e8e6e1;
@@ -824,13 +818,11 @@ function toggleSidebar(show) {
     const main = document.querySelector("main");
 
     if (show) {
-        // Show sidebar
         sidebar.classList.remove("sidebar-hidden");
         pill.classList.add("hidden");
         if (main) main.style.marginRight = "340px";
         saveSidebarState(true);
     } else {
-        // Hide sidebar
         sidebar.classList.add("sidebar-hidden");
         pill.classList.remove("hidden");
         if (main) main.style.marginRight = "0";
@@ -843,16 +835,13 @@ function saveSidebarState(isOpen) {
         if (chrome.storage && chrome.storage.local) {
             chrome.storage.local.set({ sidebar_open: isOpen });
         }
-    } catch (e) {
-        // Ignore storage errors
-    }
+    } catch (e) {}
 }
 
 function restoreSidebarState() {
     try {
         if (chrome.storage && chrome.storage.local) {
             chrome.storage.local.get(["sidebar_open"], function(data) {
-                // Default to open if no saved state
                 if (data.sidebar_open === false) {
                     toggleSidebar(false);
                 } else {
@@ -860,7 +849,6 @@ function restoreSidebarState() {
                 }
             });
         } else {
-            // No storage access, default to open
             toggleSidebar(true);
         }
     } catch (e) {
@@ -918,28 +906,23 @@ function checkAuth() {
 /* ---------------- LISTEN FOR AUTH CHANGES ---------------- */
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-
     if (request.type === "AUTH_CHANGED") {
         console.log("Auth status changed, rechecking...");
         checkAuth();
         currentResults = [];
     }
-
     if (request.type === "OPEN_QUICK_SEARCH") {
         openQuickSearchModal();
         sendResponse({ success: true });
     }
-
     if (request.type === "INSERT_TEXT") {
         insertTextAtCursor(request.text);
         sendResponse({ success: true });
     }
-
     if (request.type === "GET_SELECTION") {
         const selection = window.getSelection().toString();
         sendResponse({ selection });
     }
-
     return true;
 });
 
@@ -973,7 +956,6 @@ function openQuickSearchModal() {
 
     document.body.appendChild(quickSearchModal);
 
-    // Animate in
     requestAnimationFrame(() => {
         quickSearchModal.classList.add('visible');
     });
@@ -981,7 +963,6 @@ function openQuickSearchModal() {
     const input = quickSearchModal.querySelector('.krab-modal-input');
     const content = quickSearchModal.querySelector('.krab-modal-content');
 
-    // Close on escape or overlay click
     quickSearchModal.addEventListener('click', (e) => {
         if (e.target === quickSearchModal) {
             closeQuickSearchModal();
@@ -990,7 +971,6 @@ function openQuickSearchModal() {
 
     document.addEventListener('keydown', handleModalKeydown);
 
-    // Search on enter
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const query = input.value.trim();
@@ -1000,7 +980,6 @@ function openQuickSearchModal() {
         }
     });
 
-    // Debounced live search
     let searchTimer;
     input.addEventListener('input', () => {
         clearTimeout(searchTimer);
@@ -1091,7 +1070,6 @@ async function performQuickSearch(query, contentEl) {
     });
 }
 
-// Global function for inserting text from modal
 window.krabInsertText = function(text) {
     insertTextAtCursor(text);
     closeQuickSearchModal();
@@ -1101,7 +1079,6 @@ window.krabInsertText = function(text) {
 function insertTextAtCursor(text) {
     const platform = currentPlatform;
     if (!platform) {
-        // Fallback: try to find any focused editable element
         const activeEl = document.activeElement;
         if (activeEl && (activeEl.isContentEditable || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'INPUT')) {
             if (activeEl.isContentEditable) {
@@ -1235,12 +1212,6 @@ function hideSelectionPopup() {
 
 /* ---------------- DISPLAY CONTEXT ---------------- */
 
-function getConfidenceLevel(similarity) {
-    if (similarity >= 0.7) return 'high';
-    if (similarity >= 0.4) return 'medium';
-    return 'low';
-}
-
 function showLoading() {
     const output = document.getElementById("context-output");
     if (!output) return;
@@ -1315,20 +1286,12 @@ function showContext(results) {
     attachCardListeners();
 }
 
-// Helper to escape HTML for security
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 function showContextWithAnswer(data) {
     const output = document.getElementById("context-output");
     if (!output) return;
 
     const results = data.sources || [];
     const answer = data.answer || "";
-    const confidence = data.confidence || 0;
     const hasAnswer = data.has_answer !== false;
 
     currentResults = results;
@@ -1344,15 +1307,13 @@ function showContextWithAnswer(data) {
         return;
     }
 
-    // Build the AI answer section
+    // Build the AI answer section (confidence removed)
     let answerHtml = '';
     if (answer && hasAnswer) {
-        const confPercent = (confidence * 100).toFixed(0);
         answerHtml = `
             <div class="ctx-answer">
                 <div class="ctx-answer-header">
                     <span class="ctx-answer-badge">AI Answer</span>
-                    <span class="ctx-answer-confidence">${confPercent}% confidence</span>
                 </div>
                 <p class="ctx-answer-text">${escapeHtml(answer)}</p>
             </div>
@@ -1432,7 +1393,6 @@ function submitFeedback(chunkId, feedbackType, similarityScore) {
     const feedbackDiv = document.getElementById(`feedback-${chunkId}`);
     if (!feedbackDiv) return;
 
-    // Disable buttons immediately
     const buttons = feedbackDiv.querySelectorAll('.ctx-feedback-btn');
     buttons.forEach(btn => btn.classList.add('disabled'));
 
@@ -1444,7 +1404,6 @@ function submitFeedback(chunkId, feedbackType, similarityScore) {
         similarity_score: similarityScore
     }, function(response) {
         if (response && response.success) {
-            // Show thank you message
             feedbackDiv.innerHTML = `
                 <div class="ctx-feedback-thanks">
                     ${ICONS.check}
@@ -1452,7 +1411,6 @@ function submitFeedback(chunkId, feedbackType, similarityScore) {
                 </div>
             `;
         } else {
-            // Re-enable buttons on error
             buttons.forEach(btn => btn.classList.remove('disabled'));
             console.error("Feedback error:", response?.error);
         }
@@ -1470,7 +1428,6 @@ function getTextarea() {
 function injectContext() {
     if (!currentResults || currentResults.length === 0) return;
 
-    // Track that context was used
     currentResults.forEach(item => {
         if (item.id) {
             safeSendMessage({
@@ -1501,18 +1458,12 @@ function injectContext() {
 
     const newText = contextText + currentText;
 
-    // Handle different input types
     if (textarea.tagName === "TEXTAREA") {
         textarea.value = newText;
     } else if (textarea.contentEditable === "true" || currentPlatform?.isContentEditable) {
-        // For contenteditable divs (Claude, Gemini, ChatGPT)
         textarea.focus();
-        
-        // Try using execCommand for better compatibility
         document.execCommand('selectAll', false, null);
         document.execCommand('insertText', false, newText);
-        
-        // Fallback
         if (textarea.innerText !== newText) {
             textarea.innerText = newText;
         }
@@ -1520,7 +1471,6 @@ function injectContext() {
         textarea.innerText = newText;
     }
 
-    // Trigger input event so the platform recognizes the change
     textarea.dispatchEvent(new Event("input", { bubbles: true }));
     textarea.dispatchEvent(new Event("change", { bubbles: true }));
 
@@ -1541,13 +1491,11 @@ function injectContext() {
 /* ---------------- CSP-SAFE EVENT ATTACHMENT ---------------- */
 
 function attachCardListeners() {
-    // "Add All Context" button
     const injectAllBtn = document.getElementById("inject-context-btn");
     if (injectAllBtn) {
         injectAllBtn.addEventListener("click", injectContext);
     }
 
-    // Per-chunk inject buttons
     document.querySelectorAll('.ctx-card-inject[data-inject-index]').forEach(btn => {
         btn.addEventListener("click", function() {
             const idx = parseInt(this.getAttribute('data-inject-index'));
@@ -1555,7 +1503,6 @@ function attachCardListeners() {
         });
     });
 
-    // Expand/collapse on card body click
     document.querySelectorAll('.ctx-card-body[data-expand-index]').forEach(body => {
         body.addEventListener("click", function() {
             const idx = parseInt(this.getAttribute('data-expand-index'));
@@ -1563,7 +1510,6 @@ function attachCardListeners() {
         });
     });
 
-    // Expand buttons
     document.querySelectorAll('.ctx-card-expand').forEach(btn => {
         btn.addEventListener("click", function(e) {
             e.stopPropagation();
@@ -1589,7 +1535,6 @@ function injectSingleChunk(index) {
 
     const item = currentResults[index];
 
-    // Track usage
     if (item.id) {
         safeSendMessage({
             type: "SUBMIT_FEEDBACK",
@@ -1643,10 +1588,7 @@ function injectSingleChunk(index) {
 
 function sendPrompt(prompt) {
     console.log("Sending prompt to backend:", prompt);
-    
-    // Store current query for feedback
     currentQuery = prompt;
-    
     showLoading();
 
     safeSendMessage(
@@ -1665,7 +1607,6 @@ function sendPrompt(prompt) {
             }
 
             console.log("Received results:", response.data);
-            // NEW: Pass full response data to show AI answer + chunks
             showContextWithAnswer(response.data);
         }
     );
@@ -1691,13 +1632,10 @@ function attachListener() {
             const cleanPrompt = prompt.trim();
 
             if (!cleanPrompt || cleanPrompt.length < 3) return;
-
-            // Skip if this is injected context (prevents re-search loop)
             if (cleanPrompt.startsWith("[Company Context]")) return;
 
             console.log("Detected prompt:", cleanPrompt.substring(0, 50) + "...");
 
-            // Check if we're authenticated before sending
             safeSendMessage({ type: "CHECK_AUTH" }, function(response) {
                 if (response && response.authenticated) {
                     sendPrompt(cleanPrompt);
@@ -1706,7 +1644,6 @@ function attachListener() {
         }, 800);
     };
 
-    // Listen for multiple events to catch input in contenteditable
     textarea.addEventListener("input", handleInput);
     textarea.addEventListener("keyup", handleInput);
 
@@ -1718,7 +1655,6 @@ function attachListener() {
 
 const observer = new MutationObserver(() => {
     if (!currentPlatform) return;
-    
     const textarea = getTextarea();
     if (textarea) {
         attachListener();
@@ -1736,18 +1672,11 @@ observer.observe(document.body, {
 let lastUrl = location.href;
 
 setInterval(() => {
-
     if (location.href !== lastUrl) {
-
         lastUrl = location.href;
-
         console.log("Chat changed, reinitializing extension");
-
         listenerAttached = false;
         currentResults = [];
-
         attachListener();
-
     }
-
 }, 1000);
